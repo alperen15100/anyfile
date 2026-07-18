@@ -7,6 +7,12 @@ A small, private Android file viewer. Open a file from the in-app picker or via
 renders on the device: the app requests no permissions and has no internet
 access at all.
 
+The home screen shows recently opened files and lets you browse folders you
+grant once through the system picker (Storage Access Framework tree grants,
+still no storage permission). Note: Android itself refuses to grant the
+Downloads root folder to any app; grant Documents, DCIM, or a subfolder of
+Downloads instead.
+
 ## Supported formats
 
 | Category | Formats | Renderer |

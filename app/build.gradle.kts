@@ -11,8 +11,8 @@ android {
         applicationId = "com.arjun.gander"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     // The release keystore is intentionally not in the repo. Contributors without
@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.webkit:webkit:1.12.1")
     // Zoomable image view that tiles huge bitmaps
     implementation("com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0")

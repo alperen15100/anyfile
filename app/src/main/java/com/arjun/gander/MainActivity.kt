@@ -1,42 +1,321 @@
 package com.arjun.gander
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.text.format.DateUtils
+import android.text.format.Formatter
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.android.material.button.MaterialButton
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class MainActivity : AppCompatActivity() {
 
+    private sealed interface Row {
+        data class Header(val title: String) : Row
+        data class Hint(val text: String) : Row
+        data class Item(
+            val badge: String,
+            val color: Int,
+            val title: String,
+            val subtitle: String?,
+            val onClick: () -> Unit,
+            val onLongClick: (() -> Unit)? = null
+        ) : Row
+    }
+
+    private data class Crumb(val treeUri: Uri, val docId: String, val label: String)
+
+    private val stack = ArrayDeque<Crumb>()
+    private val adapter = RowAdapter()
+    private lateinit var toolbar: MaterialToolbar
+
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            stack.removeLast()
+            render()
+        }
+    }
+
     private val openDocument =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) openInViewer(uri)
+        }
+
+    private val openTree =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             if (uri != null) {
-                startActivity(
-                    Intent(this, ViewerActivity::class.java)
-                        .setData(uri)
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                )
+                runCatching {
+                    contentResolver.takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+                render()
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val basePad = resources.displayMetrics.density.times(32).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
-            v.setPadding(
-                basePad + bars.left, basePad + bars.top,
-                basePad + bars.right, basePad + bars.bottom
-            )
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
-        findViewById<MaterialButton>(R.id.openButton).setOnClickListener {
+
+        toolbar = findViewById(R.id.toolbar)
+        toolbar.setNavigationOnClickListener { backCallback.handleOnBackPressed() }
+        findViewById<RecyclerView>(R.id.list).let {
+            it.layoutManager = LinearLayoutManager(this)
+            it.adapter = adapter
+        }
+        findViewById<ExtendedFloatingActionButton>(R.id.openFab).setOnClickListener {
             openDocument.launch(arrayOf("*/*"))
+        }
+        onBackPressedDispatcher.addCallback(this, backCallback)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        render()
+    }
+
+    private fun openInViewer(uri: Uri) {
+        startActivity(
+            Intent(this, ViewerActivity::class.java)
+                .setData(uri)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        )
+    }
+
+    private fun render() {
+        backCallback.isEnabled = stack.isNotEmpty()
+        val rows = if (stack.isEmpty()) homeRows() else folderRows(stack.last())
+        toolbar.title = if (stack.isEmpty()) getString(R.string.app_name) else stack.last().label
+        toolbar.navigationIcon =
+            if (stack.isEmpty()) null
+            else androidx.appcompat.content.res.AppCompatResources.getDrawable(this, R.drawable.ic_back)
+        adapter.submit(rows)
+    }
+
+    private fun homeRows(): List<Row> {
+        val rows = mutableListOf<Row>()
+        rows += Row.Header(getString(R.string.recent_files))
+        val recents = Recents.all(this)
+        if (recents.isEmpty()) {
+            rows += Row.Hint(getString(R.string.no_recents_hint))
+        } else {
+            recents.forEach { r ->
+                val (badge, color) = badgeFor(r.name, null)
+                rows += Row.Item(
+                    badge, color, r.name,
+                    DateUtils.getRelativeTimeSpanString(r.time).toString(),
+                    onClick = { openInViewer(Uri.parse(r.uri)) },
+                    onLongClick = {
+                        Recents.remove(this, r.uri)
+                        Toast.makeText(this, R.string.removed, Toast.LENGTH_SHORT).show()
+                        render()
+                    }
+                )
+            }
+        }
+        rows += Row.Header(getString(R.string.folders))
+        val roots = contentResolver.persistedUriPermissions
+            .filter { it.isReadPermission && isTreeUri(it.uri) }
+            .sortedBy { treeLabel(it.uri).lowercase() }
+        if (roots.isEmpty()) rows += Row.Hint(getString(R.string.no_folders_hint))
+        roots.forEach { perm ->
+            val label = treeLabel(perm.uri)
+            rows += Row.Item(
+                "DIR", DIR_COLOR, label, null,
+                onClick = {
+                    stack.addLast(
+                        Crumb(perm.uri, DocumentsContract.getTreeDocumentId(perm.uri), label)
+                    )
+                    render()
+                },
+                onLongClick = {
+                    runCatching {
+                        contentResolver.releasePersistableUriPermission(
+                            perm.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    }
+                    Toast.makeText(this, R.string.removed, Toast.LENGTH_SHORT).show()
+                    render()
+                }
+            )
+        }
+        rows += Row.Item("+", ADD_COLOR, getString(R.string.add_folder), null,
+            onClick = { openTree.launch(null) })
+        return rows
+    }
+
+    private fun folderRows(crumb: Crumb): List<Row> {
+        data class Child(
+            val docId: String, val name: String, val mime: String,
+            val size: Long, val modified: Long
+        )
+
+        val children = mutableListOf<Child>()
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            crumb.treeUri, crumb.docId
+        )
+        runCatching {
+            contentResolver.query(
+                childrenUri,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE,
+                    DocumentsContract.Document.COLUMN_SIZE,
+                    DocumentsContract.Document.COLUMN_LAST_MODIFIED
+                ),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    children += Child(
+                        c.getString(0), c.getString(1) ?: "?", c.getString(2) ?: "",
+                        c.getLong(3), c.getLong(4)
+                    )
+                }
+            }
+        }
+
+        val dirs = children
+            .filter { it.mime == DocumentsContract.Document.MIME_TYPE_DIR }
+            .filterNot { it.name.startsWith(".") }
+            .sortedBy { it.name.lowercase() }
+        val files = children
+            .filter { it.mime != DocumentsContract.Document.MIME_TYPE_DIR }
+            .filterNot { it.name.startsWith(".") }
+            .sortedBy { it.name.lowercase() }
+
+        val rows = mutableListOf<Row>()
+        dirs.forEach { d ->
+            rows += Row.Item("DIR", DIR_COLOR, d.name, null, onClick = {
+                stack.addLast(Crumb(crumb.treeUri, d.docId, d.name))
+                render()
+            })
+        }
+        files.forEach { f ->
+            val (badge, color) = badgeFor(f.name, f.mime)
+            val subtitle = listOfNotNull(
+                Formatter.formatShortFileSize(this, f.size).takeIf { f.size > 0 },
+                DateUtils.getRelativeTimeSpanString(f.modified).toString()
+                    .takeIf { f.modified > 0 }
+            ).joinToString(" · ").ifEmpty { null }
+            rows += Row.Item(badge, color, f.name, subtitle, onClick = {
+                openInViewer(
+                    DocumentsContract.buildDocumentUriUsingTree(crumb.treeUri, f.docId)
+                )
+            })
+        }
+        if (rows.isEmpty()) rows += Row.Hint(getString(R.string.empty_folder))
+        return rows
+    }
+
+    private fun isTreeUri(uri: Uri): Boolean =
+        runCatching { DocumentsContract.getTreeDocumentId(uri) }.isSuccess &&
+            uri.pathSegments.firstOrNull() == "tree"
+
+    private fun treeLabel(uri: Uri): String {
+        val id = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull() ?: return "Folder"
+        val name = runCatching {
+            contentResolver.query(
+                DocumentsContract.buildDocumentUriUsingTree(uri, id),
+                arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                null, null, null
+            )?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+        }.getOrNull()
+        return name ?: id.substringAfterLast(':').ifEmpty { id }
+    }
+
+    private fun badgeFor(name: String, mime: String?): Pair<String, Int> {
+        val ext = name.substringAfterLast('.', "").lowercase()
+        return when (FileKind.detect(ext, mime)) {
+            FileKind.PDF -> "PDF" to 0xFFD32F2F.toInt()
+            FileKind.DOCX -> "DOC" to 0xFF1565C0.toInt()
+            FileKind.XLSX -> "XLS" to 0xFF2E7D32.toInt()
+            FileKind.PPTX -> "PPT" to 0xFFE64A19.toInt()
+            FileKind.IMAGE, FileKind.IMAGE_WEB -> "IMG" to 0xFF7B1FA2.toInt()
+            FileKind.PLAYER ->
+                if (FileKind.isAudioExt(ext)) "AUD" to 0xFF00838F.toInt()
+                else "VID" to 0xFFAD1457.toInt()
+            FileKind.MD -> "MD" to 0xFF455A64.toInt()
+            FileKind.TEXT -> "TXT" to 0xFF616161.toInt()
+            FileKind.UNSUPPORTED -> "FILE" to 0xFF78909C.toInt()
+        }
+    }
+
+    private companion object {
+        val DIR_COLOR = 0xFFF9A825.toInt()
+        val ADD_COLOR = 0xFF1565C0.toInt()
+    }
+
+    private class RowAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        private val rows = mutableListOf<Row>()
+
+        fun submit(newRows: List<Row>) {
+            rows.clear()
+            rows.addAll(newRows)
+            notifyDataSetChanged()
+        }
+
+        override fun getItemViewType(position: Int): Int = when (rows[position]) {
+            is Row.Header -> 0
+            is Row.Hint -> 1
+            is Row.Item -> 2
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            val layout = when (viewType) {
+                0 -> R.layout.row_header
+                1 -> R.layout.row_hint
+                else -> R.layout.row_item
+            }
+            return object : RecyclerView.ViewHolder(inflater.inflate(layout, parent, false)) {}
+        }
+
+        override fun getItemCount(): Int = rows.size
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            when (val row = rows[position]) {
+                is Row.Header ->
+                    holder.itemView.findViewById<TextView>(R.id.headerText).text = row.title
+                is Row.Hint ->
+                    holder.itemView.findViewById<TextView>(R.id.hintText).text = row.text
+                is Row.Item -> {
+                    val badge = holder.itemView.findViewById<TextView>(R.id.badge)
+                    badge.text = row.badge
+                    badge.background.mutate().setTint(row.color)
+                    holder.itemView.findViewById<TextView>(R.id.title).text = row.title
+                    val sub = holder.itemView.findViewById<TextView>(R.id.subtitle)
+                    sub.text = row.subtitle
+                    sub.visibility = if (row.subtitle == null) View.GONE else View.VISIBLE
+                    holder.itemView.setOnClickListener { row.onClick() }
+                    holder.itemView.setOnLongClickListener {
+                        row.onLongClick?.invoke()
+                        row.onLongClick != null
+                    }
+                }
+            }
         }
     }
 }

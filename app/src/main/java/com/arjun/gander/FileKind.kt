@@ -43,6 +43,8 @@ enum class FileKind(val page: String) {
         private const val MIME_PPTX =
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
+        fun isAudioExt(ext: String) = ext in audioExt
+
         fun detect(ext: String, mime: String?): FileKind = when {
             // .ts is TypeScript unless the provider says it is a video container
             ext == "ts" && mime?.startsWith("video/") == true -> PLAYER

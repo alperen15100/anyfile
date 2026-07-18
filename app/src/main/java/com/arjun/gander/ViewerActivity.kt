@@ -63,6 +63,17 @@ class ViewerActivity : AppCompatActivity() {
         val ext = name.substringAfterLast('.', "").lowercase()
         val mime = runCatching { contentResolver.getType(uri) }.getOrNull() ?: intent.type
 
+        // Picker selections carry a persistable grant; keep those in Recents.
+        // Open-with and folder-browsed URIs throw here and are simply skipped.
+        if (uri.scheme == "content") {
+            runCatching {
+                contentResolver.takePersistableUriPermission(
+                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                Recents.add(this, uri, name)
+            }
+        }
+
         when (val kind = detect(ext, mime)) {
             FileKind.IMAGE -> showImage(container, uri, name, ext)
             FileKind.PDF -> showPdf(container, uri, name, ext)

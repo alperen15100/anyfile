@@ -15,9 +15,12 @@ access at all.
 | | Word `.docx` | `docx-preview` in an offline WebView |
 | Spreadsheets | `.xlsx` `.xls` `.xlsm` `.xlsb` `.csv` `.ods` | SheetJS in an offline WebView |
 | Slides | `.pptx` | PPTXjs in an offline WebView |
-| Photos | JPG, PNG, WebP, BMP, HEIC/HEIF | SubsamplingScaleImageView (tiled, deep zoom) |
+| Photos | JPG, PNG, WebP, BMP, HEIC/HEIF | SubsamplingScaleImageView (tiled, deep zoom, EXIF rotation) |
 | | GIF (animated), SVG, AVIF, ICO | WebView |
-| Text | `.txt` `.md` `.json` `.xml` logs and most code files | WebView text viewer |
+| Video | MP4, M4V, MOV, MKV, WebM, 3GP, AVI, FLV, MPEG-TS | Media3 ExoPlayer |
+| Audio | MP3, M4A, AAC, FLAC, WAV, OGG, Opus, AMR | Media3 ExoPlayer |
+| Markdown | `.md` rendered as formatted HTML | marked + DOMPurify in an offline WebView |
+| Text | `.txt` `.json` `.xml` logs and most code files | WebView text viewer |
 
 Legacy binary Office files (`.doc`, `.ppt`) are not supported; the app shows a
 hint to re-save them in the modern format. `.xls` works.
@@ -78,9 +81,9 @@ above; all are MIT/Apache/BSD and compatible.
 ## Ideas for later
 
 - Recent files list on the home screen
-- Video and audio playback (ExoPlayer/Media3)
+- Find-in-document search
 - Legacy `.doc` and `.ppt` support
-- Markdown rendered as HTML instead of plain text
+- F-Droid submission
 - iOS: either a thin native SwiftUI app around QuickLook (Apple renders
   PDF/Office/images natively) or a Flutter port reusing the same JS viewer
   assets in a WebView

@@ -8,9 +8,11 @@ enum class FileKind(val page: String) {
     IMAGE(""),
     IMAGE_WEB("imgweb.html"),
     PDF(""),
+    PLAYER(""),
     DOCX("docx.html"),
     XLSX("xlsx.html"),
     PPTX("pptx.html"),
+    MD("md.html"),
     TEXT("text.html"),
     UNSUPPORTED("unsupported.html");
 
@@ -20,8 +22,15 @@ enum class FileKind(val page: String) {
         private val wordExt = setOf("docx")
         private val sheetExt = setOf("xlsx", "xls", "xlsm", "xlsb", "csv", "ods")
         private val slideExt = setOf("pptx")
+        private val mdExt = setOf("md", "markdown")
+        private val videoExt = setOf(
+            "mp4", "m4v", "mov", "mkv", "webm", "3gp", "3g2", "m2ts", "mts", "avi", "flv"
+        )
+        private val audioExt = setOf(
+            "mp3", "m4a", "aac", "flac", "wav", "ogg", "oga", "opus", "amr"
+        )
         private val textExt = setOf(
-            "txt", "md", "markdown", "log", "json", "xml", "yaml", "yml",
+            "txt", "log", "json", "xml", "yaml", "yml",
             "kt", "java", "py", "js", "ts", "html", "htm", "css", "sh", "zsh", "bash",
             "c", "cpp", "h", "hpp", "rs", "go", "rb", "php", "sql", "swift", "dart",
             "gradle", "properties", "toml", "ini", "cfg", "conf", "tex", "r", "csv"
@@ -35,14 +44,19 @@ enum class FileKind(val page: String) {
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
         fun detect(ext: String, mime: String?): FileKind = when {
+            // .ts is TypeScript unless the provider says it is a video container
+            ext == "ts" && mime?.startsWith("video/") == true -> PLAYER
             ext in imageExt -> IMAGE
             ext in imageWebExt -> IMAGE_WEB
             ext == "pdf" -> PDF
+            ext in videoExt || ext in audioExt -> PLAYER
             ext in wordExt -> DOCX
             ext in sheetExt -> XLSX
             ext in slideExt -> PPTX
+            ext in mdExt -> MD
             ext in textExt -> TEXT
             mime == "application/pdf" -> PDF
+            mime?.startsWith("video/") == true || mime?.startsWith("audio/") == true -> PLAYER
             mime == MIME_DOCX -> DOCX
             mime == MIME_XLSX || mime == "application/vnd.ms-excel" || mime == "text/csv" -> XLSX
             mime == MIME_PPTX -> PPTX

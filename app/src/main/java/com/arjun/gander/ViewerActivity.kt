@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import android.webkit.WebResourceRequest
@@ -12,6 +13,14 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.exifinterface.media.ExifInterface
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import com.arjun.gander.FileKind.Companion.detect
@@ -22,6 +31,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import java.io.ByteArrayInputStream
 import java.io.File
 
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class ViewerActivity : AppCompatActivity() {
 
     companion object {
@@ -30,10 +40,12 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private var webView: WebView? = null
+    private var player: ExoPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_viewer)
+        applySystemBarInsets(findViewById(R.id.root))
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { finish() }
@@ -54,7 +66,22 @@ class ViewerActivity : AppCompatActivity() {
         when (val kind = detect(ext, mime)) {
             FileKind.IMAGE -> showImage(container, uri, name, ext)
             FileKind.PDF -> showPdf(container, uri, name, ext)
+            FileKind.PLAYER -> showPlayer(container, uri, name, ext)
             else -> showWeb(container, uri, kind.page, name, ext)
+        }
+    }
+
+    /**
+     * targetSdk 35 draws edge to edge, so push the layout out of the status bar,
+     * display cutout and navigation bar areas.
+     */
+    private fun applySystemBarInsets(root: View) {
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            WindowInsetsCompat.CONSUMED
         }
     }
 
@@ -77,6 +104,7 @@ class ViewerActivity : AppCompatActivity() {
         imageView.setBackgroundColor(Color.BLACK)
         imageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE)
         imageView.maxScale = 12f
+        imageView.orientation = readExifRotation(uri)
         imageView.setOnImageEventListener(object : SubsamplingScaleImageView.DefaultOnImageEventListener() {
             override fun onImageLoadError(e: Exception) {
                 // Some formats decode fine in the WebView even when the region decoder gives up
@@ -86,6 +114,49 @@ class ViewerActivity : AppCompatActivity() {
         })
         container.addView(imageView, matchParent())
         imageView.setImage(ImageSource.uri(uri))
+    }
+
+    /**
+     * The image view cannot read EXIF from SAF content URIs on its own,
+     * so photos taken sideways would display sideways.
+     */
+    private fun readExifRotation(uri: Uri): Int = runCatching {
+        contentResolver.openInputStream(uri)?.use { stream ->
+            when (ExifInterface(stream).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
+            )) {
+                ExifInterface.ORIENTATION_ROTATE_90,
+                ExifInterface.ORIENTATION_TRANSPOSE -> 90
+                ExifInterface.ORIENTATION_ROTATE_180,
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> 180
+                ExifInterface.ORIENTATION_ROTATE_270,
+                ExifInterface.ORIENTATION_TRANSVERSE -> 270
+                else -> 0
+            }
+        } ?: 0
+    }.getOrDefault(0)
+
+    private fun showPlayer(container: FrameLayout, uri: Uri, name: String, ext: String) {
+        val playerView = PlayerView(this)
+        playerView.setBackgroundColor(Color.BLACK)
+        playerView.keepScreenOn = true
+        playerView.controllerShowTimeoutMs = 2500
+        container.addView(playerView, matchParent())
+
+        val exo = ExoPlayer.Builder(this).build()
+        player = exo
+        playerView.player = exo
+        exo.addListener(object : Player.Listener {
+            override fun onPlayerError(error: PlaybackException) {
+                exo.release()
+                player = null
+                container.removeAllViews()
+                showWeb(container, uri, FileKind.UNSUPPORTED.page, name, ext)
+            }
+        })
+        exo.setMediaItem(MediaItem.fromUri(uri))
+        exo.prepare()
+        exo.playWhenReady = true
     }
 
     private fun showPdf(container: FrameLayout, uri: Uri, name: String, ext: String) {
@@ -169,7 +240,14 @@ class ViewerActivity : AppCompatActivity() {
         ViewGroup.LayoutParams.MATCH_PARENT
     )
 
+    override fun onStop() {
+        player?.pause()
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        player?.release()
+        player = null
         webView?.destroy()
         webView = null
         super.onDestroy()

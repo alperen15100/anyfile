@@ -11,8 +11,8 @@ android {
         applicationId = "com.arjun.gander"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     // The release keystore is intentionally not in the repo. Contributors without
@@ -66,4 +66,9 @@ dependencies {
     implementation("com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0")
     // Pdfium based PDF viewer (maintained fork of barteksc/AndroidPdfViewer)
     implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
+    // EXIF orientation for photos opened via SAF content URIs
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    // Video and audio playback
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-ui:1.5.1")
 }

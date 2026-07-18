@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ViewAll</string>
+    <string name="app_name">Gander</string>
     <string name="main_subtitle">Open and view documents, spreadsheets, slides and photos. Everything renders on your phone, nothing is uploaded.</string>
     <string name="open_a_file">Open a file</string>
     <string name="supported_formats">PDF · Word (.docx) · Excel (.xlsx, .xls, .csv, .ods) · PowerPoint (.pptx) · Photos (JPG, PNG, WebP, GIF, HEIC, SVG and more) · Text, Markdown, JSON and code files</string>
-    <string name="open_with_hint">Tip: in your file manager, tap any file and choose Open with &gt; ViewAll.</string>
+    <string name="open_with_hint">Tip: in your file manager, tap any file and choose Open with &gt; Gander.</string>
     <string name="back">Back</string>
 </resources>

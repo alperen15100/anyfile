@@ -1,4 +1,6 @@
-# ViewAll
+# Gander
+
+Take a gander at any file.
 
 A small, private Android file viewer. Open a file from the in-app picker or via
 "Open with" from any file manager, then pinch to zoom and scroll. Everything
@@ -32,13 +34,13 @@ gradle assembleRelease
 # APK lands in app/build/outputs/apk/release/app-release.apk
 ```
 
-Release signing expects a local, untracked keystore at `keystore/viewall.jks`
-(store and key password `viewall-local`, alias `viewall`); generate one with:
+Release signing expects a local, untracked keystore at `keystore/gander.jks`
+(store and key password `gander-local`, alias `gander`); generate one with:
 
 ```sh
-keytool -genkeypair -keystore keystore/viewall.jks -alias viewall \
+keytool -genkeypair -keystore keystore/gander.jks -alias gander \
   -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass viewall-local -keypass viewall-local -dname "CN=ViewAll"
+  -storepass gander-local -keypass gander-local -dname "CN=Gander"
 ```
 
 The keystore is gitignored on purpose: it is a personal signing key and must

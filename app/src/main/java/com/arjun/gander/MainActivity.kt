@@ -1,4 +1,4 @@
-package com.arjun.viewall
+package com.arjun.gander
 
 import android.content.Intent
 import android.os.Bundle

@@ -1,4 +1,4 @@
-package com.arjun.viewall
+package com.arjun.gander
 
 /**
  * What we know how to display, and which bundled HTML page renders it

@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ViewAll"
+rootProject.name = "Gander"
 include(":app")

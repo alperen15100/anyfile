@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.arjun.viewall"
+    namespace = "com.arjun.gander"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.arjun.viewall"
+        applicationId = "com.arjun.gander"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -17,14 +17,14 @@ android {
 
     // The release keystore is intentionally not in the repo. Contributors without
     // it get an unsigned release build; debug builds always work.
-    val releaseKeystore = rootProject.file("keystore/viewall.jks")
+    val releaseKeystore = rootProject.file("keystore/gander.jks")
     if (releaseKeystore.exists()) {
         signingConfigs {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = "viewall-local"
-                keyAlias = "viewall"
-                keyPassword = "viewall-local"
+                storePassword = "gander-local"
+                keyAlias = "gander"
+                keyPassword = "gander-local"
             }
         }
     }

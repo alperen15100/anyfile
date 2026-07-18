@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not supported</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  .card {
+    margin: 32px 16px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    color: #37474f;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 18px; }
+  .card .fname { font-weight: 600; word-break: break-all; }
+  .card p { font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Can't display this file yet</h2>
+  <p class="fname" id="fname"></p>
+  <p id="hint"></p>
+  <p>Supported today: PDF, Word (.docx), Excel (.xlsx, .xls, .csv, .ods), PowerPoint (.pptx), photos and images, plain text, Markdown, JSON and code files.</p>
+</div>
+<script src="app.js"></script>
+<script>
+document.getElementById("fname").textContent = vwName;
+var hint = document.getElementById("hint");
+if (vwExt === "doc" || vwExt === "ppt") {
+  hint.textContent =
+    "This is a legacy Office format (." + vwExt + "). If you re-save it as ." +
+    (vwExt === "doc" ? "docx" : "pptx") + ", ViewAll can display it.";
+} else {
+  hint.textContent = "Support for more formats can be added later.";
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+.gradle/
+build/
+local.properties
+.DS_Store
+.idea/
+*.iml
+captures/
+
+# Signing key stays local, never in the public repo
+keystore/

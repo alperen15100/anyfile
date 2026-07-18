@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text</title>
+<link rel="stylesheet" href="app.css">
+<style>
+  body { background: #ffffff; }
+  pre {
+    margin: 0;
+    padding: 14px;
+    font: 13px/1.5 "Roboto Mono", Menlo, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #212121;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #121212; }
+    pre { color: #e0e0e0; }
+    .vw-status { background: #1e1e1e; color: #cccccc; }
+  }
+</style>
+</head>
+<body>
+<div id="vw-status" class="vw-status">Loading…</div>
+<pre id="content"></pre>
+<script src="app.js"></script>
+<script>
+vwFetchDoc("text")
+  .then(function (txt) {
+    document.getElementById("content").textContent = txt;
+    vwStatusDone();
+  })
+  .catch(function (e) { vwError("Could not read this file", String(e)); });
+</script>
+</body>
+</html>

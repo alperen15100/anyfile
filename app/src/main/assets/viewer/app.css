@@ -1,0 +1,35 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, -apple-system, "Segoe UI", sans-serif;
+  background: #eceff1;
+}
+
+.vw-status {
+  margin: 24px auto;
+  max-width: 420px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #37474f;
+  font-size: 15px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.vw-error {
+  background: #fdecea;
+  color: #8c1d18;
+  text-align: left;
+}
+
+.vw-error .vw-error-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.vw-error .vw-error-detail {
+  font-size: 13px;
+  opacity: 0.85;
+  word-break: break-word;
+}

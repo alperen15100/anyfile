@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- White sheet with a folded corner -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,24 H60 L74,38 V80 Q74,84 70,84 H38 Q34,84 34,80 V28 Q34,24 38,24 Z" />
+    <path
+        android:fillColor="#FFB0BEC5"
+        android:pathData="M60,24 L74,38 H60 Z" />
+    <!-- Eye -->
+    <path
+        android:fillColor="#FF1565C0"
+        android:pathData="M40,60 Q54,46 68,60 Q54,74 40,60 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,54.5 a5.5,5.5 0 1,0 0.01,0 Z" />
+    <path
+        android:fillColor="#FF0D47A1"
+        android:pathData="M54,57 a3,3 0 1,0 0.01,0 Z" />
+</vector>

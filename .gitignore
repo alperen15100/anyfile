@@ -8,3 +8,4 @@ captures/
 
 # Signing key stays local, never in the public repo
 keystore/
+dist/

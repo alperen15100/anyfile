@@ -36,6 +36,17 @@ android {
         }
     }
 
+    // Per-ABI APKs: Pdfium's native libs are the bulk of the size, and a phone
+    // only needs its own architecture. The universal APK is still produced.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

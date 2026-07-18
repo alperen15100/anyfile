@@ -15,19 +15,24 @@ android {
         versionName = "1.0"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = rootProject.file("keystore/viewall.jks")
-            storePassword = "viewall-local"
-            keyAlias = "viewall"
-            keyPassword = "viewall-local"
+    // The release keystore is intentionally not in the repo. Contributors without
+    // it get an unsigned release build; debug builds always work.
+    val releaseKeystore = rootProject.file("keystore/viewall.jks")
+    if (releaseKeystore.exists()) {
+        signingConfigs {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = "viewall-local"
+                keyAlias = "viewall"
+                keyPassword = "viewall-local"
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

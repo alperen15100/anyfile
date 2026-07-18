@@ -32,10 +32,19 @@ gradle assembleRelease
 # APK lands in app/build/outputs/apk/release/app-release.apk
 ```
 
-The release build is signed with `keystore/viewall.jks`
-(store and key password: `viewall-local`, alias `viewall`). This keystore was
-generated locally for personal sideloading. Keep using the same keystore for
-updates, otherwise Android will refuse to update the installed app.
+Release signing expects a local, untracked keystore at `keystore/viewall.jks`
+(store and key password `viewall-local`, alias `viewall`); generate one with:
+
+```sh
+keytool -genkeypair -keystore keystore/viewall.jks -alias viewall \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -storepass viewall-local -keypass viewall-local -dname "CN=ViewAll"
+```
+
+The keystore is gitignored on purpose: it is a personal signing key and must
+never land in the public repo. Without it, release builds come out unsigned
+(debug builds always work). Keep using the same keystore across versions,
+otherwise Android refuses to update the installed app.
 
 ## Installing on a phone
 
@@ -58,6 +67,11 @@ updates, otherwise Android will refuse to update the installed app.
 - PPTX fidelity is approximate by nature (JS re-implementation of PowerPoint
   layout). Complex decks (smart art, exotic themes, embedded fonts) will look
   simplified.
+
+## License
+
+MIT (see `LICENSE`). Vendored viewer libraries keep their own licenses, noted
+above; all are MIT/Apache/BSD and compatible.
 
 ## Ideas for later
 

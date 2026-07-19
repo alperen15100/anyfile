@@ -1,46 +1,88 @@
-# Gander
+# Gander 🪿
 
-Take a gander at any file.
+**Take a gander at any file.** A tiny, open source, fully offline **file viewer for Android** that opens
+PDF, Word, Excel, PowerPoint, photos, videos, audio, Markdown, text and code in one app,
+with **zero permissions, no ads, no tracking and no internet access at all**.
 
-A small, private Android file viewer. Open a file from the in-app picker or via
-"Open with" from any file manager, then pinch to zoom and scroll. Everything
-renders on the device: the app requests no permissions and has no internet
-access at all.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/mokshablr/gander)](../../releases/latest)
+[![Build](https://img.shields.io/github/actions/workflow/status/mokshablr/gander/build.yml?branch=main)](../../actions)
+![Min API](https://img.shields.io/badge/minSdk-26%20(Android%208)-brightgreen)
+![Kotlin](https://img.shields.io/badge/Kotlin-100%25-purple)
 
-The home screen shows recently opened files and lets you browse folders you
-grant once through the system picker (Storage Access Framework tree grants,
-still no storage permission). Note: Android itself refuses to grant the
-Downloads root folder to any app; grant Documents, DCIM, or a subfolder of
-Downloads instead.
+Every phone ships with a dozen half-viewers that bounce your documents to cloud services.
+Gander is the opposite: one small APK (about 15 MB) that renders everything **on the device**.
+It cannot phone home because it does not even hold the INTERNET permission.
+
+## Screenshots
+
+| Home: recents and folders | Folder browsing | PDF |
+| :---: | :---: | :---: |
+| ![Recent files with thumbnail previews and granted folders](docs/screenshots/home.png) | ![Browsing a granted folder with previews](docs/screenshots/folder.png) | ![PDF viewer](docs/screenshots/pdf.png) |
+
+| Word (.docx) | PowerPoint (.pptx) | Excel (.xlsx) |
+| :---: | :---: | :---: |
+| ![Word document viewer](docs/screenshots/docx.png) | ![PowerPoint slides viewer](docs/screenshots/pptx.png) | ![Excel spreadsheet viewer with sheet tabs](docs/screenshots/xlsx.png) |
+
+## Features
+
+- **One viewer for everything**: documents, spreadsheets, slides, images, video, audio, Markdown, code
+- **Pinch zoom and smooth scrolling** everywhere, with deep zoom into huge photos (tiled decoding)
+- **Recent files** with thumbnail previews (image, video frame, PDF first page)
+- **Folder browsing** through one-time system grants, still without any storage permission
+- **"Open with" integration**: tap a file in any file manager or app and pick Gander
+- **Private by construction**: no permissions, no INTERNET, no analytics, no accounts, nothing leaves the phone
+- **Modern Android**: Material 3, dark mode, edge to edge, works on Android 8.0+
 
 ## Supported formats
 
 | Category | Formats | Renderer |
 | --- | --- | --- |
-| Documents | PDF | Pdfium (native, `android-pdf-viewer`) |
-| | Word `.docx` | `docx-preview` in an offline WebView |
-| Spreadsheets | `.xlsx` `.xls` `.xlsm` `.xlsb` `.csv` `.ods` | SheetJS in an offline WebView |
-| Slides | `.pptx` | PPTXjs in an offline WebView |
-| Photos | JPG, PNG, WebP, BMP, HEIC/HEIF | SubsamplingScaleImageView (tiled, deep zoom, EXIF rotation) |
+| Documents | PDF | Pdfium (native) |
+| | Word `.docx` | docx-preview, offline in a sandboxed WebView |
+| Spreadsheets | `.xlsx` `.xls` `.xlsm` `.xlsb` `.csv` `.ods` | SheetJS, offline |
+| Slides | PowerPoint `.pptx` | PPTXjs, offline |
+| Photos | JPG, PNG, WebP, BMP, HEIC/HEIF | Tiled deep-zoom image view, EXIF aware |
 | | GIF (animated), SVG, AVIF, ICO | WebView |
 | Video | MP4, M4V, MOV, MKV, WebM, 3GP, AVI, FLV, MPEG-TS | Media3 ExoPlayer |
 | Audio | MP3, M4A, AAC, FLAC, WAV, OGG, Opus, AMR | Media3 ExoPlayer |
-| Markdown | `.md` rendered as formatted HTML | marked + DOMPurify in an offline WebView |
-| Text | `.txt` `.json` `.xml` logs and most code files | WebView text viewer |
+| Markdown | `.md` rendered as formatted HTML | marked + DOMPurify, offline |
+| Text and code | `.txt` `.json` `.xml` logs, most source files | Text viewer |
 
-Legacy binary Office files (`.doc`, `.ppt`) are not supported; the app shows a
-hint to re-save them in the modern format. `.xls` works.
+Legacy binary `.doc` and `.ppt` are not supported (no faithful offline renderer exists);
+the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls` works.
 
-## Building
+## Install
 
-Requirements already on this machine: Android SDK at `~/Library/Android/sdk`,
-Gradle 8.x, and a JDK 17+ (the build is pinned to Android Studio's bundled
-JDK 21 via `org.gradle.java.home` in `gradle.properties`; adjust that path if
-Android Studio moves).
+1. Download the latest APK from [Releases](../../releases/latest):
+   `Gander-x.y-arm64.apk` fits practically every phone from 2017 onward
+   (use the `universal` APK for very old or x86 devices).
+2. Copy it to your phone, tap it, and allow "install unknown apps" when asked.
+3. Optional: Play Protect may warn about an unknown developer; that is what
+   sideloaded open source looks like. Tap "Install anyway".
+
+Updating: install the new APK over the old one; recents and folder grants survive.
+
+## How the zero-permission trick works
+
+Gander receives files through the Storage Access Framework and "Open with" intents,
+so the OS hands it exactly the documents you chose and nothing else. Office formats
+render inside a locked-down WebView whose every request is intercepted by
+`WebViewAssetLoader`: bundled JS libraries load from app assets and the document
+streams from the content URI. No network stack is ever touched, and the app does
+not declare the INTERNET permission, so there is nothing to audit or trust.
+
+Folder browsing uses `ACTION_OPEN_DOCUMENT_TREE` grants. Note that Android itself
+refuses to grant the Downloads root to any app; grant Documents, DCIM or a
+subfolder of Downloads instead.
+
+## Build from source
+
+Requirements: JDK 17+ and the Android SDK (platform 35).
 
 ```sh
-gradle assembleRelease
-# APK lands in app/build/outputs/apk/release/app-release.apk
+./gradlew assembleDebug        # installable debug build
+./gradlew assembleRelease      # unsigned without a keystore
 ```
 
 Release signing expects a local, untracked keystore at `keystore/gander.jks`
@@ -53,43 +95,35 @@ keytool -genkeypair -keystore keystore/gander.jks -alias gander \
 ```
 
 The keystore is gitignored on purpose: it is a personal signing key and must
-never land in the public repo. Without it, release builds come out unsigned
-(debug builds always work). Keep using the same keystore across versions,
-otherwise Android refuses to update the installed app.
+never land in a public repo.
 
-## Installing on a phone
+## Architecture in one paragraph
 
-1. Copy `app-release.apk` to the phone (or `adb install app-release.apk`).
-2. Tap it, allow "install unknown apps" for your file manager when prompted.
+`ViewerActivity` routes by file extension first, MIME type second (`FileKind.kt`),
+into one of four surfaces: a native Pdfium view for PDF, a tiled
+`SubsamplingScaleImageView` for photos, Media3 ExoPlayer for video and audio, or a
+sandboxed WebView for everything rendered by vendored JS libraries
+(`app/src/main/assets/viewer/`). The home screen (`MainActivity`) lists recents
+(persisted SAF grants) and granted folders (DocumentsContract child queries), with
+thumbnails generated off-thread and cached (`Thumbs.kt`).
 
-## Architecture notes
+Vendored viewer libraries and their licenses: JSZip (MIT), docx-preview
+(Apache-2.0), SheetJS CE (Apache-2.0), PPTXjs + divs2slides (MIT), jQuery 1.11
+(MIT), D3 3.x + NVD3 (BSD/Apache), marked (MIT), DOMPurify (Apache-2.0/MPL).
 
-- `ViewerActivity` routes by file extension first, MIME type second
-  (`FileKind.kt`), then shows one of three surfaces: a native tiled image view,
-  a native Pdfium view, or a WebView.
-- WebView pages are served through `WebViewAssetLoader`
-  (`https://appassets.androidplatform.net/`): `/assets/` maps to bundled
-  assets, `/doc/` streams the opened document from its content URI. Because
-  everything is intercepted in-process, the app works with zero permissions.
-- Office rendering libraries are vendored under
-  `app/src/main/assets/viewer/lib/`: JSZip (MIT), docx-preview (Apache-2.0),
-  SheetJS CE (Apache-2.0), PPTXjs + divs2slides (MIT) with jQuery 1.11 (MIT),
-  D3 3.x + NVD3 (BSD/Apache) for PPTX charts.
-- PPTX fidelity is approximate by nature (JS re-implementation of PowerPoint
-  layout). Complex decks (smart art, exotic themes, embedded fonts) will look
-  simplified.
+## Roadmap
+
+- Find-in-document search
+- F-Droid listing
+- Legacy `.doc` / `.ppt` support if a usable offline renderer appears
+- iOS companion (thin QuickLook wrapper)
+
+## Contributing
+
+Issues and small PRs are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
+If Gander is useful to you, a star helps other people find it.
 
 ## License
 
-MIT (see `LICENSE`). Vendored viewer libraries keep their own licenses, noted
-above; all are MIT/Apache/BSD and compatible.
-
-## Ideas for later
-
-- Recent files list on the home screen
-- Find-in-document search
-- Legacy `.doc` and `.ppt` support
-- F-Droid submission
-- iOS: either a thin native SwiftUI app around QuickLook (Apple renders
-  PDF/Office/images natively) or a Flutter port reusing the same JS viewer
-  assets in a WebView
+[MIT](LICENSE). Vendored viewer libraries keep their own licenses, listed above;
+all are MIT/Apache/BSD and compatible.

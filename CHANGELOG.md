@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1 (2026-07-19)
+
+- New app icon: fanned file cards on paper, matching the project artwork
+  (the old eye mark read as surveillance, the opposite of what Gander is)
+
 ## 1.3 (2026-07-19)
 
 - Thumbnail previews in Recent files and folder browsing: images (EXIF

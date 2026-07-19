@@ -1,0 +1,1 @@
+Thumbnail previews in recents and folders: images, video frames and PDF first pages, cached and generated off-thread.

@@ -1,0 +1,24 @@
+One small app that opens practically any file, entirely on your phone.
+
+Gander is a viewer for PDF, Word (.docx), Excel (.xlsx, .xls, .csv, .ods), PowerPoint (.pptx), photos (JPG, PNG, WebP, HEIC, GIF, SVG and more), video (MP4, MKV, WebM, MOV and more), audio (MP3, M4A, FLAC, WAV, OGG, Opus), Markdown, plain text and source code. Pinch to zoom, scroll, done.
+
+Private by construction:
+
+* Zero permissions requested
+* No INTERNET permission, so nothing can ever leave your device
+* No ads, no trackers, no analytics, no accounts
+
+Files reach Gander only through the system file picker or "Open with" from your file manager. Office documents render inside a sandboxed WebView using bundled open source libraries; nothing is uploaded anywhere, ever.
+
+Features:
+
+* Recent files with thumbnail previews (images, video frames, PDF pages)
+* Browse folders you grant once, still without any storage permission
+* Deep zoom into huge photos with tiled decoding, EXIF rotation handled
+* Sheet tabs for multi-sheet spreadsheets
+* Markdown rendered as formatted text, dark mode aware
+* Material 3 design, edge to edge, works on Android 8.0+
+
+Limitations, honestly: complex PowerPoint decks render approximately, spreadsheet charts are not drawn, and legacy binary .doc/.ppt are not supported (binary .xls works). Gander is a viewer, not an editor.
+
+MIT licensed. Source, issues and APKs: https://github.com/mokshablr/gander

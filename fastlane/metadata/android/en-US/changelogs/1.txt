@@ -1,0 +1,1 @@
+First release: offline zero-permission viewer for PDF, Word, Excel, PowerPoint, photos, Markdown, text and code.

@@ -1,0 +1,1 @@
+Toolbar clears display cutouts, sideways photos display upright (EXIF), Markdown renders as formatted HTML, video and audio playback via Media3 (MP4, MKV, WebM, MP3, FLAC and more).

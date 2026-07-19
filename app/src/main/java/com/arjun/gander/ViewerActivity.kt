@@ -15,7 +15,6 @@ import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.exifinterface.media.ExifInterface
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -115,7 +114,7 @@ class ViewerActivity : AppCompatActivity() {
         imageView.setBackgroundColor(Color.BLACK)
         imageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE)
         imageView.maxScale = 12f
-        imageView.orientation = readExifRotation(uri)
+        imageView.orientation = Thumbs.exifRotation(contentResolver, uri)
         imageView.setOnImageEventListener(object : SubsamplingScaleImageView.DefaultOnImageEventListener() {
             override fun onImageLoadError(e: Exception) {
                 // Some formats decode fine in the WebView even when the region decoder gives up
@@ -126,26 +125,6 @@ class ViewerActivity : AppCompatActivity() {
         container.addView(imageView, matchParent())
         imageView.setImage(ImageSource.uri(uri))
     }
-
-    /**
-     * The image view cannot read EXIF from SAF content URIs on its own,
-     * so photos taken sideways would display sideways.
-     */
-    private fun readExifRotation(uri: Uri): Int = runCatching {
-        contentResolver.openInputStream(uri)?.use { stream ->
-            when (ExifInterface(stream).getAttributeInt(
-                ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
-            )) {
-                ExifInterface.ORIENTATION_ROTATE_90,
-                ExifInterface.ORIENTATION_TRANSPOSE -> 90
-                ExifInterface.ORIENTATION_ROTATE_180,
-                ExifInterface.ORIENTATION_FLIP_VERTICAL -> 180
-                ExifInterface.ORIENTATION_ROTATE_270,
-                ExifInterface.ORIENTATION_TRANSVERSE -> 270
-                else -> 0
-            }
-        } ?: 0
-    }.getOrDefault(0)
 
     private fun showPlayer(container: FrameLayout, uri: Uri, name: String, ext: String) {
         val playerView = PlayerView(this)

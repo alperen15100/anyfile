@@ -11,6 +11,7 @@ import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -34,7 +35,9 @@ class MainActivity : AppCompatActivity() {
             val title: String,
             val subtitle: String?,
             val onClick: () -> Unit,
-            val onLongClick: (() -> Unit)? = null
+            val onLongClick: (() -> Unit)? = null,
+            val thumbUri: Uri? = null,
+            val thumbExt: String = ""
         ) : Row
     }
 
@@ -123,15 +126,20 @@ class MainActivity : AppCompatActivity() {
         } else {
             recents.forEach { r ->
                 val (badge, color) = badgeFor(r.name, null)
+                val ext = r.name.substringAfterLast('.', "").lowercase()
+                val uri = Uri.parse(r.uri)
                 rows += Row.Item(
                     badge, color, r.name,
                     DateUtils.getRelativeTimeSpanString(r.time).toString(),
-                    onClick = { openInViewer(Uri.parse(r.uri)) },
+                    onClick = { openInViewer(uri) },
                     onLongClick = {
                         Recents.remove(this, r.uri)
+                        Thumbs.evict(this, r.uri)
                         Toast.makeText(this, R.string.removed, Toast.LENGTH_SHORT).show()
                         render()
-                    }
+                    },
+                    thumbUri = uri.takeIf { Thumbs.supported(FileKind.detect(ext, null), ext) },
+                    thumbExt = ext
                 )
             }
         }
@@ -215,16 +223,21 @@ class MainActivity : AppCompatActivity() {
         }
         files.forEach { f ->
             val (badge, color) = badgeFor(f.name, f.mime)
+            val ext = f.name.substringAfterLast('.', "").lowercase()
+            val fileUri = DocumentsContract.buildDocumentUriUsingTree(crumb.treeUri, f.docId)
             val subtitle = listOfNotNull(
                 Formatter.formatShortFileSize(this, f.size).takeIf { f.size > 0 },
                 DateUtils.getRelativeTimeSpanString(f.modified).toString()
                     .takeIf { f.modified > 0 }
             ).joinToString(" · ").ifEmpty { null }
-            rows += Row.Item(badge, color, f.name, subtitle, onClick = {
-                openInViewer(
-                    DocumentsContract.buildDocumentUriUsingTree(crumb.treeUri, f.docId)
-                )
-            })
+            rows += Row.Item(
+                badge, color, f.name, subtitle,
+                onClick = { openInViewer(fileUri) },
+                thumbUri = fileUri.takeIf {
+                    Thumbs.supported(FileKind.detect(ext, f.mime), ext)
+                },
+                thumbExt = ext
+            )
         }
         if (rows.isEmpty()) rows += Row.Hint(getString(R.string.empty_folder))
         return rows
@@ -303,8 +316,18 @@ class MainActivity : AppCompatActivity() {
                     holder.itemView.findViewById<TextView>(R.id.hintText).text = row.text
                 is Row.Item -> {
                     val badge = holder.itemView.findViewById<TextView>(R.id.badge)
+                    val thumb = holder.itemView.findViewById<ImageView>(R.id.thumb)
                     badge.text = row.badge
                     badge.background.mutate().setTint(row.color)
+                    badge.visibility = View.VISIBLE
+                    thumb.visibility = View.GONE
+                    thumb.setImageDrawable(null)
+                    thumb.tag = null
+                    if (row.thumbUri != null) {
+                        Thumbs.load(
+                            holder.itemView.context, row.thumbUri, row.thumbExt, thumb, badge
+                        )
+                    }
                     holder.itemView.findViewById<TextView>(R.id.title).text = row.title
                     val sub = holder.itemView.findViewById<TextView>(R.id.subtitle)
                     sub.text = row.subtitle

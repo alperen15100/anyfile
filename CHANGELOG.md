@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4 (2026-07-19)
+
+- Gander now appears in the Share sheet: share a document, photo, video or
+  audio file from any app (WhatsApp, Gmail, a browser) straight into Gander
+- Shared plain text opens in the text viewer
+
 ## 1.3.1 (2026-07-19)
 
 - New app icon: fanned file cards on paper, matching the project artwork

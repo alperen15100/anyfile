@@ -30,7 +30,7 @@ It cannot phone home because it does not even hold the INTERNET permission.
 - **Pinch zoom and smooth scrolling** everywhere, with deep zoom into huge photos (tiled decoding)
 - **Recent files** with thumbnail previews (image, video frame, PDF first page)
 - **Folder browsing** through one-time system grants, still without any storage permission
-- **"Open with" integration**: tap a file in any file manager or app and pick Gander
+- **Share sheet and "Open with" integration**: share a file from any app (chat, mail, browser) into Gander, or tap it in a file manager
 - **Private by construction**: no permissions, no INTERNET, no analytics, no accounts, nothing leaves the phone
 - **Modern Android**: Material 3, dark mode, edge to edge, works on Android 8.0+
 

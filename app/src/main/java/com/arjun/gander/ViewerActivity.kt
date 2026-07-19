@@ -1,6 +1,7 @@
 package com.arjun.gander
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -13,6 +14,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.MediaItem
@@ -50,8 +52,12 @@ class ViewerActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
         val container = findViewById<FrameLayout>(R.id.container)
 
+        // Files arrive via VIEW (data), the share sheet (EXTRA_STREAM),
+        // a plain path extra, or as shared text (EXTRA_TEXT).
         val uri = intent.data
+            ?: IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
             ?: intent.getStringExtra(EXTRA_PATH)?.let { Uri.fromFile(File(it)) }
+            ?: sharedTextUri()
         if (uri == null) {
             finish()
             return
@@ -93,6 +99,16 @@ class ViewerActivity : AppCompatActivity() {
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
+    }
+
+    /** Shared plain text becomes a temp file shown in the text viewer. */
+    private fun sharedTextUri(): Uri? {
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
+        return runCatching {
+            val f = File(cacheDir, "shared-text.txt")
+            f.writeText(text)
+            Uri.fromFile(f)
+        }.getOrNull()
     }
 
     private fun resolveDisplayName(uri: Uri): String {

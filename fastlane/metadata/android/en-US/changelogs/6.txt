@@ -1,0 +1,1 @@
+Gander now appears in the Share sheet: share files from any app straight into it. Shared plain text opens in the text viewer.

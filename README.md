@@ -14,6 +14,10 @@ Every phone ships with a dozen half-viewers that bounce your documents to cloud 
 Gander is the opposite: one small APK (about 15 MB) that renders everything **on the device**.
 It cannot phone home because it does not even hold the INTERNET permission.
 
+<p align="center">
+  <img src="docs/demo.gif" width="300" alt="Gander demo: thumbnail recents, folder browsing, PDF, Word, Excel and Markdown viewing">
+</p>
+
 ## Screenshots
 
 | Home: recents and folders | Folder browsing | PDF |

@@ -67,6 +67,11 @@ the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls`
 
 Updating: install the new APK over the old one; recents and folder grants survive.
 
+**Automatic updates without a store**: install
+[Obtainium](https://github.com/ImranR98/Obtainium) and add
+`https://github.com/mokshablr/gander` as an app source. It follows the tagged
+GitHub releases here and updates Gander like a store would.
+
 ## How the zero-permission trick works
 
 Gander receives files through the Storage Access Framework and "Open with" intents,

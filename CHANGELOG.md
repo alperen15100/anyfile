@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5 (2026-07-21)
+
+- Find in document: search inside Word, Excel, PowerPoint, Markdown, text
+  and code files with match count and next/previous navigation
+  (PDF search is not included yet; the PDF renderer does not expose text)
+
 ## 1.4 (2026-07-19)
 
 - Gander now appears in the Share sheet: share a document, photo, video or

@@ -35,6 +35,7 @@ It cannot phone home because it does not even hold the INTERNET permission.
 - **Recent files** with thumbnail previews (image, video frame, PDF first page)
 - **Folder browsing** through one-time system grants, still without any storage permission
 - **Share sheet and "Open with" integration**: share a file from any app (chat, mail, browser) into Gander, or tap it in a file manager
+- **Find in document**: search inside Word, Excel, slides, Markdown, text and code with match navigation
 - **Private by construction**: no permissions, no INTERNET, no analytics, no accounts, nothing leaves the phone
 - **Modern Android**: Material 3, dark mode, edge to edge, works on Android 8.0+
 
@@ -122,7 +123,6 @@ Vendored viewer libraries and their licenses: JSZip (MIT), docx-preview
 
 ## Roadmap
 
-- Find-in-document search
 - F-Droid listing
 - Legacy `.doc` / `.ppt` support if a usable offline renderer appears
 - iOS companion (thin QuickLook wrapper)

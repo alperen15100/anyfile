@@ -12,7 +12,12 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
 import androidx.core.view.ViewCompat
@@ -84,6 +89,64 @@ class ViewerActivity : AppCompatActivity() {
             FileKind.PDF -> showPdf(container, uri, name, ext)
             FileKind.PLAYER -> showPlayer(container, uri, name, ext)
             else -> showWeb(container, uri, kind.page, name, ext)
+        }
+        setUpSearch(toolbar)
+    }
+
+    /** In-document search for WebView-rendered formats via findAllAsync. */
+    private fun setUpSearch(toolbar: MaterialToolbar) {
+        val bar = findViewById<LinearLayout>(R.id.searchBar)
+        val input = findViewById<EditText>(R.id.searchInput)
+        val count = findViewById<TextView>(R.id.searchCount)
+        val searchItem = toolbar.menu.findItem(R.id.action_search)
+
+        val web = webView
+        if (web == null) {
+            searchItem.isVisible = false
+            return
+        }
+        searchItem.isVisible = true
+
+        web.setFindListener { active, total, done ->
+            if (done) {
+                count.text =
+                    if (total == 0 && input.text.isNotEmpty()) getString(R.string.match_count, 0, 0)
+                    else if (total > 0) getString(R.string.match_count, active + 1, total)
+                    else ""
+            }
+        }
+
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        searchItem.setOnMenuItemClickListener {
+            bar.visibility = LinearLayout.VISIBLE
+            input.requestFocus()
+            imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            true
+        }
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val q = s?.toString().orEmpty()
+                if (q.isEmpty()) {
+                    web.clearMatches()
+                    count.text = ""
+                } else {
+                    web.findAllAsync(q)
+                }
+            }
+        })
+        input.setOnEditorActionListener { _, _, _ ->
+            web.findNext(true)
+            true
+        }
+        findViewById<ImageButton>(R.id.searchPrev).setOnClickListener { web.findNext(false) }
+        findViewById<ImageButton>(R.id.searchNext).setOnClickListener { web.findNext(true) }
+        findViewById<ImageButton>(R.id.searchClose).setOnClickListener {
+            imm.hideSoftInputFromWindow(input.windowToken, 0)
+            input.text.clear()
+            web.clearMatches()
+            bar.visibility = LinearLayout.GONE
         }
     }
 

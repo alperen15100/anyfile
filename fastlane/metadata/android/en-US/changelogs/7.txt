@@ -1,0 +1,1 @@
+Find in document: search inside Word, Excel, PowerPoint, Markdown, text and code files with match count and next/previous navigation.

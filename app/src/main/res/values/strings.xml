@@ -11,6 +11,10 @@
     <string name="empty_folder">Nothing to show in this folder.</string>
     <string name="removed">Removed</string>
     <string name="search_in_document">Search in document</string>
+    <string name="share_file">Share</string>
+    <string name="show_in_file_manager">Show in file manager</string>
+    <string name="no_file_manager">No app can open this folder</string>
+    <string name="share_failed">This file can\'t be shared</string>
     <string name="previous_match">Previous match</string>
     <string name="next_match">Next match</string>
     <string name="close_search">Close search</string>

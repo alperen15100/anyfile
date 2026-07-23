@@ -36,6 +36,7 @@ It cannot phone home because it does not even hold the INTERNET permission.
 - **Folder browsing** through one-time system grants, still without any storage permission
 - **Share sheet and "Open with" integration**: share a file from any app (chat, mail, browser) into Gander, or tap it in a file manager
 - **Find in document**: search inside Word, Excel, slides, Markdown, text and code with match navigation
+- **Share and locate**: send the open file to any app, or jump to its folder in the file manager
 - **Private by construction**: no permissions, no INTERNET, no analytics, no accounts, nothing leaves the phone
 - **Modern Android**: Material 3, dark mode, edge to edge, works on Android 8.0+
 

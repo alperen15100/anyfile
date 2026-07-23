@@ -11,6 +11,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Gander">
 
+        <!-- Lets the Share action hand out the shared-text temp file; grants are
+             per-share and read-only, so the zero-permission story is unchanged -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

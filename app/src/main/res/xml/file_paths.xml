@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the cache dir: the sole file:// content Gander creates itself is the
+     shared-text temp file. Everything else is a content:// URI shared as-is. -->
+<paths>
+    <cache-path
+        name="cache"
+        path="/" />
+</paths>

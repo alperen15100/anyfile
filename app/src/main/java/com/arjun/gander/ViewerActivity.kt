@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +20,9 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -43,6 +47,8 @@ class ViewerActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_PATH = "path"
         private const val ASSET_HOST = "appassets.androidplatform.net"
+        private const val EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.documents"
+        private const val DOWNLOADS_AUTHORITY = "com.android.providers.downloads.documents"
     }
 
     private var webView: WebView? = null
@@ -91,6 +97,111 @@ class ViewerActivity : AppCompatActivity() {
             else -> showWeb(container, uri, kind.page, name, ext)
         }
         setUpSearch(toolbar)
+        setUpActions(toolbar, uri, ext, mime)
+    }
+
+    /** Share and "show in file manager" toolbar actions. */
+    private fun setUpActions(toolbar: MaterialToolbar, uri: Uri, ext: String, mime: String?) {
+        toolbar.menu.findItem(R.id.action_share).setOnMenuItemClickListener {
+            shareFile(uri, ext, mime)
+            true
+        }
+        val folder = containingFolder(uri)
+        toolbar.menu.findItem(R.id.action_open_folder).apply {
+            isVisible = folder != null
+            setOnMenuItemClickListener {
+                openFolder(folder ?: return@setOnMenuItemClickListener true)
+                true
+            }
+        }
+    }
+
+    private fun shareFile(uri: Uri, ext: String, mime: String?) {
+        // Received content:// URIs go out with a read grant passed along; our own
+        // file:// URIs (the shared-text temp file) go through the FileProvider
+        val shareUri =
+            if (uri.scheme == "content") uri
+            else runCatching {
+                FileProvider.getUriForFile(this, "$packageName.fileprovider", File(uri.path!!))
+            }.getOrNull()
+        if (shareUri == null) {
+            Toast.makeText(this, R.string.share_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(mime ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "*/*")
+            .putExtra(Intent.EXTRA_STREAM, shareUri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // Some Android versions refuse to delegate a tree-derived grant and
+        // throw here rather than at read time
+        runCatching { startActivity(Intent.createChooser(send, getString(R.string.share_file))) }
+            .onFailure { Toast.makeText(this, R.string.share_failed, Toast.LENGTH_SHORT).show() }
+    }
+
+    /**
+     * Best-effort document URI of the folder holding [uri], for the Files app.
+     * Null when the source provider does not expose a real filesystem location,
+     * which hides the menu item.
+     */
+    private fun containingFolder(uri: Uri): Uri? = runCatching {
+        when {
+            uri.scheme == "file" ->
+                File(uri.path!!).parent?.let { folderDocUri(it) }
+            uri.authority == EXTERNAL_STORAGE_AUTHORITY -> {
+                // Document id is "volume:relative/path"; drop the file segment
+                val docId = DocumentsContract.getDocumentId(uri)
+                val volume = docId.substringBefore(':', "")
+                val path = docId.substringAfter(':', "")
+                if (volume.isEmpty() || path.isEmpty()) null
+                else DocumentsContract.buildDocumentUri(
+                    EXTERNAL_STORAGE_AUTHORITY,
+                    "$volume:${path.substringBeforeLast('/', "")}"
+                )
+            }
+            uri.authority == DOWNLOADS_AUTHORITY -> {
+                val docId = DocumentsContract.getDocumentId(uri)
+                if (docId.startsWith("raw:")) {
+                    File(docId.removePrefix("raw:")).parent?.let { folderDocUri(it) }
+                } else {
+                    // Opaque ids (msf:42) at least live under Download
+                    DocumentsContract.buildDocumentUri(
+                        EXTERNAL_STORAGE_AUTHORITY, "primary:Download"
+                    )
+                }
+            }
+            uri.authority == "media" ->
+                // Our read grant lets us ask MediaStore for the backing path
+                contentResolver.query(uri, arrayOf("_data"), null, null, null)?.use { c ->
+                    if (!c.moveToFirst()) null
+                    else c.getString(0)?.let { File(it).parent }?.let { folderDocUri(it) }
+                }
+            else -> null
+        }
+    }.getOrNull()
+
+    /** Maps an absolute folder path to an ExternalStorageProvider document URI. */
+    private fun folderDocUri(path: String): Uri? {
+        val primary = Environment.getExternalStorageDirectory().absolutePath
+        val docId = when {
+            path.startsWith(primary) ->
+                "primary:" + path.removePrefix(primary).trimStart('/')
+            path.startsWith("/storage/") -> {
+                val rest = path.removePrefix("/storage/")
+                rest.substringBefore('/') + ":" + rest.substringAfter('/', "")
+            }
+            else -> return null
+        }
+        return DocumentsContract.buildDocumentUri(EXTERNAL_STORAGE_AUTHORITY, docId)
+    }
+
+    private fun openFolder(folder: Uri) {
+        // The system Files app (and most file managers) handle VIEW on a
+        // directory document; no grant needed, they have provider access
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(folder, DocumentsContract.Document.MIME_TYPE_DIR)
+        runCatching { startActivity(view) }.onFailure {
+            Toast.makeText(this, R.string.no_file_manager, Toast.LENGTH_SHORT).show()
+        }
     }
 
     /** In-document search for WebView-rendered formats via findAllAsync. */

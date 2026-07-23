@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6 (2026-07-23)
+
+- Share the open file to any app straight from the viewer toolbar
+- "Show in file manager" opens the file's folder in the system Files app
+  (appears when the folder can be worked out from where the file came from)
+
 ## 1.5 (2026-07-21)
 
 - Find in document: search inside Word, Excel, PowerPoint, Markdown, text

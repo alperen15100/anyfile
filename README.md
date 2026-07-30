@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/social-preview.png" alt="Gander: take a gander at any file. Open source Android file viewer for PDF, DOCX, XLSX, PPTX, JPG, MP4, MP3 and Markdown. 100% offline, 15 MB APK, zero permissions, no ads or trackers.">
+</p>
+
 # Gander 🪿
 
 **Take a gander at any file.** A tiny, open source, fully offline **file viewer for Android** that opens

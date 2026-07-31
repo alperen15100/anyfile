@@ -64,7 +64,7 @@ the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls`
 
 ## Install
 
-Runs on **Android 8.0 (API 26) and up**. Nothing newer is required.
+Runs on **Android 8.0 (API 26) and up**.
 
 1. Download the latest APK from [Releases](../../releases/latest):
    `Gander-x.y-arm64.apk` fits practically every phone from 2017 onward

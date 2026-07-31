@@ -80,6 +80,20 @@ Updating: install the new APK over the old one; recents and folder grants surviv
 `https://github.com/mokshablr/gander` as an app source. It follows the tagged
 GitHub releases here and updates Gander like a store would.
 
+**Verify before installing**: every release is signed with the same key, so you can
+confirm an APK really came from this repo. Obtainium can pin the fingerprint below,
+and for a file you have already downloaded:
+
+```sh
+apksigner verify --print-certs Gander-x.y-arm64.apk
+```
+
+Signing certificate SHA-256:
+
+```
+5B:5C:F6:4A:94:23:7C:D5:F0:E0:85:76:00:38:BC:1C:EB:DF:18:DA:BA:5C:B3:EA:CA:7C:15:9F:22:A7:E2:4B
+```
+
 ## How the zero-permission trick works
 
 Gander receives files through the Storage Access Framework and "Open with" intents,

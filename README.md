@@ -5,8 +5,8 @@
 # Gander 🪿
 
 **Take a gander at any file.** A tiny, open source, fully offline **file viewer for Android** that opens
-PDF, Word, Excel, PowerPoint, photos, videos, audio, Markdown, text and code in one app,
-with **zero permissions, no ads, no tracking and no internet access at all**.
+PDF, Word (`.docx`), Excel, PowerPoint (`.pptx`), photos, videos, audio, Markdown, text and code
+in one app, with **zero permissions, no ads, no tracking and no internet access at all**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/mokshablr/gander)](../../releases/latest)

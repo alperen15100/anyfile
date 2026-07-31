@@ -64,6 +64,8 @@ the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls`
 
 ## Install
 
+Runs on **Android 8.0 (API 26) and up**. Nothing newer is required.
+
 1. Download the latest APK from [Releases](../../releases/latest):
    `Gander-x.y-arm64.apk` fits practically every phone from 2017 onward
    (use the `universal` APK for very old or x86 devices).
@@ -93,7 +95,8 @@ subfolder of Downloads instead.
 
 ## Build from source
 
-Requirements: JDK 17+ and the Android SDK (platform 35).
+To build it yourself you need JDK 17+ and the Android SDK (platform 35). These are
+build requirements only. The installed app runs on Android 8.0 (API 26) and up.
 
 ```sh
 ./gradlew assembleDebug        # installable debug build

@@ -1,0 +1,1 @@
+PDF zoom now goes to 10x instead of 3x, enough to read a QR code on a full page. OpenDocument spreadsheets (.ods) now appear in the Open-with list. Screen reader support: the back button, photos, web images and file rows are labelled, and the search match count is announced properly.

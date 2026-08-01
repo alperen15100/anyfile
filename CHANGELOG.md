@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7 (2026-08-02)
+
+- PDF zoom now reaches 10x instead of the previous 3x, enough to read a small
+  QR code on a full page (thanks @neuos)
+- OpenDocument spreadsheets (`.ods`) now appear in the Open-with list; they
+  already rendered, but the MIME type was never registered (thanks to sgc on
+  Hacker News)
+- Screen reader support: the back button, the photo viewer, web-rendered
+  images and the file rows on the home screen are all labelled now, and the
+  search match count is announced as "Match 2 of 7" rather than "two sevenths"
+  (thanks @freedomben for asking)
+
 ## 1.6 (2026-07-23)
 
 - Share the open file to any app straight from the viewer toolbar

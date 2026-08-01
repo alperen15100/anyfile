@@ -342,6 +342,11 @@ class ViewerActivity : AppCompatActivity() {
     private fun showPdf(container: FrameLayout, uri: Uri, name: String, ext: String) {
         val pdfView = PDFView(this, null)
         pdfView.setBackgroundColor(Color.parseColor("#FF37474F"))
+        // The library caps pinch zoom at 3x, too little to read something small on an
+        // A4 page (a ticket QR code); 10x is the pinch handler's own ceiling. Mid zoom
+        // moves up too so the double-tap ladder is not 1x to 1.75x to 10x
+        pdfView.midZoom = 3f
+        pdfView.maxZoom = 10f
         container.addView(pdfView, matchParent())
         pdfView.fromUri(uri)
             .enableAnnotationRendering(true)

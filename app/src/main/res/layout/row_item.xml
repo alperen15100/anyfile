@@ -11,9 +11,12 @@
     android:paddingBottom="6dp"
     android:background="?attr/selectableItemBackground">
 
+    <!-- The row itself carries the description (set in MainActivity), so the badge,
+         thumbnail, title and subtitle are one TalkBack stop rather than four -->
     <FrameLayout
         android:layout_width="48dp"
-        android:layout_height="48dp">
+        android:layout_height="48dp"
+        android:importantForAccessibility="no">
 
         <TextView
             android:id="@+id/badge"
@@ -40,6 +43,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginStart="14dp"
+        android:importantForAccessibility="no"
         android:orientation="vertical">
 
         <TextView

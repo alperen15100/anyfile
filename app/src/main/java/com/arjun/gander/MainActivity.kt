@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
         toolbar.navigationIcon =
             if (stack.isEmpty()) null
             else androidx.appcompat.content.res.AppCompatResources.getDrawable(this, R.drawable.ic_back)
+        toolbar.navigationContentDescription = getString(R.string.back)
         adapter.submit(rows)
     }
 
@@ -332,6 +333,11 @@ class MainActivity : AppCompatActivity() {
                     val sub = holder.itemView.findViewById<TextView>(R.id.subtitle)
                     sub.text = row.subtitle
                     sub.visibility = if (row.subtitle == null) View.GONE else View.VISIBLE
+                    // The row children are not-important for accessibility, so this is
+                    // the whole announcement. Keeping the badge in it matters: the badge
+                    // is hidden once a thumbnail loads, and the file type would go with it
+                    holder.itemView.contentDescription =
+                        listOfNotNull(row.title, row.badge, row.subtitle).joinToString(", ")
                     holder.itemView.setOnClickListener { row.onClick() }
                     holder.itemView.setOnLongClickListener {
                         row.onLongClick?.invoke()

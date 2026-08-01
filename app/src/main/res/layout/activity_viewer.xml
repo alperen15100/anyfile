@@ -13,6 +13,7 @@
         android:background="?attr/colorSurface"
         android:elevation="4dp"
         app:menu="@menu/viewer_menu"
+        app:navigationContentDescription="@string/back"
         app:navigationIcon="@drawable/ic_back"
         app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
 
@@ -43,6 +44,7 @@
             android:id="@+id/searchCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:accessibilityLiveRegion="polite"
             android:paddingStart="6dp"
             android:paddingEnd="6dp"
             android:textAppearance="?attr/textAppearanceBodySmall"

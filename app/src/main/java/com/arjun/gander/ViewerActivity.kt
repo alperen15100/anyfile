@@ -220,6 +220,12 @@ class ViewerActivity : AppCompatActivity() {
 
         web.setFindListener { active, total, done ->
             if (done) {
+                // Set the spoken form before the text: the live region fires on the text
+                // change, and by then the description has to be the one to read out
+                count.contentDescription =
+                    if (total == 0 && input.text.isNotEmpty()) getString(R.string.no_matches)
+                    else if (total > 0) getString(R.string.match_count_spoken, active + 1, total)
+                    else null
                 count.text =
                     if (total == 0 && input.text.isNotEmpty()) getString(R.string.match_count, 0, 0)
                     else if (total > 0) getString(R.string.match_count, active + 1, total)
@@ -301,6 +307,7 @@ class ViewerActivity : AppCompatActivity() {
 
     private fun showImage(container: FrameLayout, uri: Uri, name: String, ext: String) {
         val imageView = SubsamplingScaleImageView(this)
+        imageView.contentDescription = name
         imageView.setBackgroundColor(Color.BLACK)
         imageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE)
         imageView.maxScale = 12f

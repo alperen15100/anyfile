@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Not supported</title>
+<title>Unknown format</title>
 <link rel="stylesheet" href="app.css">
 <style>
   .card {
@@ -17,14 +17,28 @@
   .card h2 { margin: 0 0 8px; font-size: 18px; }
   .card .fname { font-weight: 600; word-break: break-all; }
   .card p { font-size: 14px; line-height: 1.5; }
+  .as-text {
+    display: block;
+    width: 100%;
+    margin: 18px 0 8px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #1565c0;
+    color: #ffffff;
+    font: 500 15px Roboto, -apple-system, "Segoe UI", sans-serif;
+  }
+  .as-text:active { background: #0d47a1; }
+  .card .caveat { font-size: 13px; opacity: 0.75; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h2>Can't display this file yet</h2>
+  <h2>Gander doesn't recognize this format</h2>
   <p class="fname" id="fname"></p>
   <p id="hint"></p>
-  <p>Supported today: PDF, Word (.docx), Excel (.xlsx, .xls, .csv, .ods), PowerPoint (.pptx), photos and images, video and audio, Markdown, plain text, JSON and code files.</p>
+  <button type="button" class="as-text" id="asText" aria-describedby="caveat">View as text</button>
+  <p class="caveat" id="caveat">If it isn't text, you'll see random characters.</p>
 </div>
 <script src="app.js"></script>
 <script>
@@ -35,8 +49,15 @@ if (vwExt === "doc" || vwExt === "ppt") {
     "This is a legacy Office format (." + vwExt + "). If you re-save it as ." +
     (vwExt === "doc" ? "docx" : "pptx") + ", Gander can display it.";
 } else {
-  hint.textContent = "Support for more formats can be added later.";
+  // Nothing useful to add; leave the card to the action below
+  hint.style.display = "none";
 }
+
+document.getElementById("asText").addEventListener("click", function () {
+  location.replace(
+    "text.html?name=" + encodeURIComponent(vwName) + "&ext=" + encodeURIComponent(vwExt)
+  );
+});
 </script>
 </body>
 </html>

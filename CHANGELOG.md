@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Files Gander cannot render now offer a **View as text** button instead of a
+  dead end, so a file with no extension can be read without renaming it to
+  `.txt` first (thanks @immanuelfodor)
+- The text viewer reads large files in 5 MB pages with a **Show more** button
+  at the end, so a big log opens straight away instead of stalling while the
+  whole thing loads, and none of it is out of reach
+- Text files that start with a byte order mark, including UTF-16, now decode
+  correctly instead of showing a stray character between every letter
+
 ## 1.8 (2026-08-04)
 
 - Short documents no longer show a grey band below the content. The viewer

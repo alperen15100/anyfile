@@ -59,6 +59,10 @@ It cannot phone home because it does not even hold the INTERNET permission.
 | Markdown | `.md` rendered as formatted HTML | marked + DOMPurify, offline |
 | Text and code | `.txt` `.json` `.xml` logs, most source files | Text viewer |
 
+Anything else, including files with no extension at all, offers **View as text**, which
+shows the raw contents without renaming the file. Large files load 5 MB at a time with a
+**Show more** button, so they open instantly and can still be read end to end.
+
 Legacy binary `.doc` and `.ppt` are not supported (no faithful offline renderer exists);
 the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls` works.
 

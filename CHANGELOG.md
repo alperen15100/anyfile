@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8 (2026-08-04)
+
+- Short documents no longer show a grey band below the content. The viewer
+  background now fills the screen in the Markdown, text, spreadsheet and
+  slide views (thanks @lalalasupa0)
+
 ## 1.7 (2026-08-02)
 
 - PDF zoom now reaches 10x instead of the previous 3x, enough to read a small

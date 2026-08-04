@@ -1,0 +1,1 @@
+Short documents no longer leave a grey band below the content in the Markdown, text, spreadsheet and slide viewers.

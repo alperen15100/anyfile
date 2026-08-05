@@ -15,6 +15,14 @@
 - The permission list is genuinely empty again. Media3 had been quietly
   adding ACCESS_NETWORK_STATE, which never did anything here because Gander
   only plays local files and has no internet access at all
+- PDFs now render with pdf.js in the same sandboxed viewer that already handled
+  Word and Excel, so the app ships no native code at all. The download is one
+  APK for every phone instead of four, and about 8 MB instead of 15
+- Very large PDFs are read a piece at a time as you scroll rather than loaded
+  whole, so a 50 MB scan opens sooner and does not sit in memory while you read it
+- PDFs open a little slower than before, by roughly half a second on a fast
+  phone. The renderer that was faster cannot be shipped any more; it stopped
+  being maintained and no longer meets current Play requirements
 
 ## 1.8 (2026-08-04)
 

@@ -8,7 +8,7 @@ Private by construction:
 * No INTERNET permission, so nothing can ever leave your device
 * No ads, no trackers, no analytics, no accounts
 
-Files reach Gander only through the system file picker or "Open with" from your file manager. Office documents render inside a sandboxed WebView using bundled open source libraries; nothing is uploaded anywhere, ever.
+Files reach Gander only through the system file picker or "Open with" from your file manager. PDFs and Office documents render inside a sandboxed WebView using bundled open source libraries; nothing is uploaded anywhere, ever.
 
 Features:
 

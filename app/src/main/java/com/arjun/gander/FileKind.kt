@@ -7,7 +7,7 @@ package com.arjun.gander
 enum class FileKind(val page: String) {
     IMAGE(""),
     IMAGE_WEB("imgweb.html"),
-    PDF(""),
+    PDF("pdf.html"),
     PLAYER(""),
     DOCX("docx.html"),
     XLSX("xlsx.html"),

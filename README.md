@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/social-preview.png" alt="Gander: take a gander at any file. Open source Android file viewer for PDF, DOCX, XLSX, PPTX, JPG, MP4, MP3 and Markdown. 100% offline, 15 MB APK, zero permissions, no ads or trackers.">
+  <img src="docs/social-preview.png" alt="Gander: take a gander at any file. Open source Android file viewer for PDF, DOCX, XLSX, PPTX, JPG, MP4, MP3 and Markdown. 100% offline, 8 MB APK, zero permissions, no ads or trackers.">
 </p>
 
 # Gander 🪿
@@ -15,7 +15,7 @@ in one app, with **zero permissions, no ads, no tracking and no internet access 
 ![Kotlin](https://img.shields.io/badge/Kotlin-100%25-purple)
 
 Every phone ships with a dozen half-viewers that bounce your documents to cloud services.
-Gander is the opposite: one small APK (about 15 MB) that renders everything **on the device**.
+Gander is the opposite: one small APK (about 8 MB) that renders everything **on the device**.
 It cannot phone home because it does not even hold the INTERNET permission.
 
 <p align="center">
@@ -48,7 +48,7 @@ It cannot phone home because it does not even hold the INTERNET permission.
 
 | Category | Formats | Renderer |
 | --- | --- | --- |
-| Documents | PDF | Pdfium (native) |
+| Documents | PDF | pdf.js, offline in a sandboxed WebView |
 | | Word `.docx` | docx-preview, offline in a sandboxed WebView |
 | Spreadsheets | `.xlsx` `.xls` `.xlsm` `.xlsb` `.csv` `.ods` | SheetJS, offline |
 | Slides | PowerPoint `.pptx` | PPTXjs, offline |
@@ -71,8 +71,7 @@ the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls`
 Runs on **Android 8.0 (API 26) and up**.
 
 1. Download the latest APK from [Releases](../../releases/latest):
-   `Gander-x.y-arm64.apk` fits practically every phone from 2017 onward
-   (use the `universal` APK for very old or x86 devices).
+   `Gander-x.y.apk` runs on every architecture, since the app ships no native code.
 2. Copy it to your phone, tap it, and allow "install unknown apps" when asked.
 3. Optional: Play Protect may warn about an unknown developer; that is what
    sideloaded open source looks like. Tap "Install anyway".
@@ -89,7 +88,7 @@ confirm an APK really came from this repo. Obtainium can pin the fingerprint bel
 and for a file you have already downloaded:
 
 ```sh
-apksigner verify --print-certs Gander-x.y-arm64.apk
+apksigner verify --print-certs Gander-x.y.apk
 ```
 
 Signing certificate SHA-256:
@@ -136,16 +135,18 @@ never land in a public repo.
 ## Architecture in one paragraph
 
 `ViewerActivity` routes by file extension first, MIME type second (`FileKind.kt`),
-into one of four surfaces: a native Pdfium view for PDF, a tiled
-`SubsamplingScaleImageView` for photos, Media3 ExoPlayer for video and audio, or a
-sandboxed WebView for everything rendered by vendored JS libraries
-(`app/src/main/assets/viewer/`). The home screen (`MainActivity`) lists recents
+into one of three surfaces: a tiled `SubsamplingScaleImageView` for photos, Media3
+ExoPlayer for video and audio, or a sandboxed WebView for everything rendered by
+vendored JS libraries (`app/src/main/assets/viewer/`), PDF included. Documents
+under 16 MB are handed to the WebView whole; larger ones are served in ranges so
+only the pages being read are held in memory. The home screen (`MainActivity`) lists recents
 (persisted SAF grants) and granted folders (DocumentsContract child queries), with
 thumbnails generated off-thread and cached (`Thumbs.kt`).
 
-Vendored viewer libraries and their licenses: JSZip (MIT), docx-preview
-(Apache-2.0), SheetJS CE (Apache-2.0), PPTXjs + divs2slides (MIT), jQuery 1.11
-(MIT), D3 3.x + NVD3 (BSD/Apache), marked (MIT), DOMPurify (Apache-2.0/MPL).
+Vendored viewer libraries and their licenses: pdf.js (Apache-2.0), JSZip (MIT),
+docx-preview (Apache-2.0), SheetJS CE (Apache-2.0), PPTXjs + divs2slides (MIT),
+jQuery 1.11 (MIT), D3 3.x + NVD3 (BSD/Apache), marked (MIT), DOMPurify
+(Apache-2.0/MPL). The app ships no native code.
 
 ## Roadmap
 

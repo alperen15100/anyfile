@@ -8,6 +8,8 @@ vendored (not fetched at runtime) because the app has no network access at all.
 
 | File | Project | Version | License | Upstream |
 | --- | --- | --- | --- | --- |
+| `pdf.min.mjs` | pdf.js (legacy build) | 5.7.284 | Apache-2.0 | https://github.com/mozilla/pdf.js |
+| `pdf.worker.min.mjs` | pdf.js worker (legacy build) | 5.7.284 | Apache-2.0 | https://github.com/mozilla/pdf.js |
 | `jszip3.min.js` | JSZip | 3.10.1 | MIT or GPL-3.0 dual | https://github.com/Stuk/jszip |
 | `docx-preview.min.js` | docx-preview | 0.3.x (jsdelivr latest, fetched 2026-07-19) | Apache-2.0 | https://github.com/VolodymyrBaydalka/docxjs |
 | `xlsx.full.min.js` | SheetJS Community Edition | 0.20.3 | Apache-2.0 | https://git.sheetjs.com/sheetjs/sheetjs |

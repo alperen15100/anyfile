@@ -21,6 +21,11 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
+      # Also builds the release merged manifest, which is the one that actually
+      # ships, so checkReleasePermissions guards it too. Unsigned without a keystore.
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
       - uses: actions/upload-artifact@v4
         with:
           name: gander-debug-apk

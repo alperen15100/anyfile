@@ -9,6 +9,10 @@ mkdir -p "$LIB/pptx"
 get() { curl -sfL --retry 2 -o "$LIB/$1" "$2" && echo "fetched $1"; }
 
 get jszip3.min.js       "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+# The legacy build, which is transpiled for older system WebViews
+PDFJS="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/legacy/build"
+get pdf.min.mjs         "$PDFJS/pdf.min.mjs"
+get pdf.worker.min.mjs  "$PDFJS/pdf.worker.min.mjs"
 get docx-preview.min.js "https://cdn.jsdelivr.net/npm/docx-preview/dist/docx-preview.min.js"
 get xlsx.full.min.js    "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
 get marked.min.js       "https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"

@@ -36,18 +36,16 @@ android {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("release")
         }
-    }
-
-    // Per-ABI APKs: Pdfium's native libs are the bulk of the size, and a phone
-    // only needs its own architecture. The universal APK is still produced.
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = true
+        debug {
+            // So a debug build installs alongside an existing release install rather
+            // than being refused for having a different signing key, which would
+            // otherwise mean uninstalling and losing recents and folder grants.
+            applicationIdSuffix = ".debug"
         }
     }
+
+    // No per-ABI split: with PDF rendering moved off Pdfium the app ships no native
+    // code at all, so one APK serves every architecture.
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -63,20 +61,25 @@ android {
 // ACCESS_NETWORK_STATE, stripped in the manifest. Naming one permission there does not stop the next
 // dependency bump adding another, and that would surface in the store listing rather than the build.
 // So assert the invariant on the merged manifest instead of trusting the strip.
-val permissionAllowlist = setOf(
+//
+// Held as suffixes on the variant's own applicationId, since a debug build carries
+// one and would otherwise fail against a hardcoded package name.
+val permissionAllowlistSuffixes = setOf(
     // androidx.core declares this so libraries can registerReceiver(..., RECEIVER_NOT_EXPORTED).
     // Signature level and self-granted, so it is never shown to the user as a permission.
-    "com.arjun.gander.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ".DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 )
 
 androidComponents.onVariants { variant ->
     val suffix = variant.name.replaceFirstChar { it.uppercase() }
     val mergedManifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+    val appId = variant.applicationId
 
     val checkPermissions = tasks.register("check${suffix}Permissions") {
         description = "Fails if the merged manifest requests any permission we did not sign off on."
         val manifestFile = mergedManifest
-        val allowed = permissionAllowlist
+        val allowedSuffixes = permissionAllowlistSuffixes
+        val applicationId = appId
         val stamp = layout.buildDirectory.file("reports/permissions/$suffix.txt")
         inputs.file(manifestFile)
         outputs.file(stamp)
@@ -85,6 +88,7 @@ androidComponents.onVariants { variant ->
                 .findAll(manifestFile.get().asFile.readText())
                 .map { it.groupValues[1] }
                 .toList()
+            val allowed = allowedSuffixes.map { applicationId.get() + it }.toSet()
             val unexpected = requested.filterNot { it in allowed }
             if (unexpected.isNotEmpty()) {
                 throw GradleException(
@@ -115,11 +119,9 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.webkit:webkit:1.16.0")
     // Zoomable image view that tiles huge bitmaps
     implementation("com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0")
-    // Pdfium based PDF viewer (maintained fork of barteksc/AndroidPdfViewer)
-    implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
     // EXIF orientation for photos opened via SAF content URIs
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     // Video and audio playback

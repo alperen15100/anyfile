@@ -10,6 +10,11 @@
   whole thing loads, and none of it is out of reach
 - Text files that start with a byte order mark, including UTF-16, now decode
   correctly instead of showing a stray character between every letter
+- Gander now targets Android 16 (API 36), so it keeps working as newer
+  releases tighten how apps draw behind the status and navigation bars
+- The permission list is genuinely empty again. Media3 had been quietly
+  adding ACCESS_NETWORK_STATE, which never did anything here because Gander
+  only plays local files and has no internet access at all
 
 ## 1.8 (2026-08-04)
 

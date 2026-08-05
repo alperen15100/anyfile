@@ -268,8 +268,8 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     /**
-     * targetSdk 35 draws edge to edge, so push the layout out of the status bar,
-     * display cutout and navigation bar areas.
+     * Edge to edge is enforced from targetSdk 35 on, so push the layout out of the
+     * status bar, display cutout and navigation bar areas.
      */
     private fun applySystemBarInsets(root: View) {
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->

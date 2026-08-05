@@ -1,3 +1,5 @@
+import com.android.build.api.artifact.SingleArtifact
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.arjun.gander"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.arjun.gander"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 10
         versionName = "1.8"
     }
@@ -55,6 +57,57 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+// Requesting nothing is the whole promise, but permissions arrive transitively: Media3 contributes
+// ACCESS_NETWORK_STATE, stripped in the manifest. Naming one permission there does not stop the next
+// dependency bump adding another, and that would surface in the store listing rather than the build.
+// So assert the invariant on the merged manifest instead of trusting the strip.
+val permissionAllowlist = setOf(
+    // androidx.core declares this so libraries can registerReceiver(..., RECEIVER_NOT_EXPORTED).
+    // Signature level and self-granted, so it is never shown to the user as a permission.
+    "com.arjun.gander.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+)
+
+androidComponents.onVariants { variant ->
+    val suffix = variant.name.replaceFirstChar { it.uppercase() }
+    val mergedManifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+
+    val checkPermissions = tasks.register("check${suffix}Permissions") {
+        description = "Fails if the merged manifest requests any permission we did not sign off on."
+        val manifestFile = mergedManifest
+        val allowed = permissionAllowlist
+        val stamp = layout.buildDirectory.file("reports/permissions/$suffix.txt")
+        inputs.file(manifestFile)
+        outputs.file(stamp)
+        doLast {
+            val requested = Regex("""<uses-permission[^>]*android:name="([^"]+)"""")
+                .findAll(manifestFile.get().asFile.readText())
+                .map { it.groupValues[1] }
+                .toList()
+            val unexpected = requested.filterNot { it in allowed }
+            if (unexpected.isNotEmpty()) {
+                throw GradleException(
+                    buildString {
+                        appendLine("Gander ships with no permissions, but $suffix requests:")
+                        unexpected.forEach { appendLine("    $it") }
+                        appendLine()
+                        appendLine("A dependency added these. Either strip each one with")
+                        appendLine("tools:node=\"remove\" in AndroidManifest.xml, or add it to")
+                        append("permissionAllowlist in app/build.gradle.kts with a reason.")
+                    }
+                )
+            }
+            stamp.get().asFile.apply {
+                parentFile.mkdirs()
+                writeText(requested.joinToString("\n"))
+            }
+        }
+    }
+
+    // Variant tasks are not registered yet while onVariants runs, so match lazily.
+    tasks.matching { it.name == "assemble$suffix" }
+        .configureEach { dependsOn(checkPermissions) }
 }
 
 dependencies {

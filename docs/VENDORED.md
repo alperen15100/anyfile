@@ -24,6 +24,29 @@ vendored (not fetched at runtime) because the app has no network access at all.
 | `pptx/nv.d3.min.js` | NVD3 | 1.8.1 | Apache-2.0 | https://github.com/novus/nvd3 |
 | `pptx/pptxjs.css`, `pptx/nv.d3.min.css` | PPTXjs / NVD3 styles | see above | see above | see above |
 
+## Before upgrading pdf.js
+
+`pdf.html` is the only viewer loaded as an ES module, and a module the WebView
+cannot parse never runs, so the page has no way to report the problem from inside
+itself. That makes the Chromium floor a fact to check rather than a preference.
+
+- The legacy build of 5.7.284 supports **Chromium 125 and newer** (Mozilla's
+  pdf.js FAQ). That number is `PDFJS_MIN_CHROMIUM_MAJOR` in
+  `app/src/main/java/com/arjun/gander/ViewerActivity.kt`, compared against the
+  WebView package actually in use. Below it, `pdf.html` shows a card explaining
+  that Android System WebView needs updating instead of loading the renderer.
+- **Chromium 138 is the ceiling on Android 8.0, 8.1 and 9.0.** Chromium 139
+  requires Android 10, so those releases will never receive a newer WebView, and
+  minSdk here is 26. A pdf.js version needing more than 138 therefore does not
+  degrade on API 26 to 28, it ends PDF support there. Check the new version's
+  floor first: if it is above 138, this is a decision about dropping PDFs on
+  Android 8 and 9, not a version bump.
+
+Bumping pdf.js means editing together the two `pdf.*.mjs` rows above, `PDFJS` in
+`scripts/fetch-viewer-libs.sh`, and `PDFJS_MIN_CHROMIUM_MAJOR`. The card's wording
+lives in `pdf.html` and reads both version numbers out of the query string, so it
+needs no edit.
+
 Notes for packagers (F-Droid and friends): the minified files are unmodified
 upstream distribution artifacts. If unminified sources are required, every
 project above publishes them at the linked repository, and the fetch script can

@@ -26,6 +26,13 @@
 - PDFs open a little slower than before, by roughly half a second on a fast
   phone. The renderer that was faster cannot be shipped any more; it stopped
   being maintained and no longer meets current Play requirements
+- The search button no longer appears for PDFs. PDF pages are drawn as images
+  with no text behind them, so a search could only ever come back empty. Search
+  in Word, Excel, slides, Markdown, text and code is unchanged
+- On a phone whose Android System WebView is too old to run the PDF renderer,
+  the viewer now says so and names the version needed, instead of sitting on
+  "Rendering document…" with nothing to explain it. Updating Android System
+  WebView fixes it, and no other format is affected
 
 ## 1.8 (2026-08-04)
 

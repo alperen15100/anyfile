@@ -33,6 +33,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
+import androidx.webkit.WebViewCompat
 import com.arjun.gander.FileKind.Companion.detect
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
@@ -62,6 +63,28 @@ class ViewerActivity : AppCompatActivity() {
          * comfortable to buffer on a low-end device; a 50 MB scan is not.
          */
         private const val RANGE_THRESHOLD_BYTES = 16L * 1024 * 1024
+
+        /**
+         * Chromium major version the vendored pdf.js needs. Mozilla puts the legacy
+         * build's floor at Chrome 125, and `lib/pdf.min.mjs` is pdfjs-dist 5.7.284
+         * legacy. Below it, `pdf.html` says so instead of loading the renderer.
+         *
+         * Read this before raising it alongside a pdf.js upgrade. Chromium 138 is the
+         * last WebView that Android 8.0, 8.1 and 9.0 will ever receive, because 139
+         * requires Android 10 and minSdk here is 26. A pdf.js release needing more than
+         * 138 therefore does not degrade on API 26 to 28, it ends PDF support there for
+         * good. docs/VENDORED.md carries the same warning next to the version fetched.
+         */
+        private const val PDFJS_MIN_CHROMIUM_MAJOR = 125
+
+        /**
+         * Below this, a parsed major is treated as unreadable rather than as ancient.
+         * WebView only became updatable at Chromium 33, so a provider reporting
+         * something like "1.0" is telling us it does not use Chromium version numbers,
+         * not that it predates them, and refusing its PDFs would break a device that
+         * works today.
+         */
+        private const val PLAUSIBLE_CHROMIUM_MAJOR = 30
     }
 
     private var webView: WebView? = null
@@ -103,12 +126,15 @@ class ViewerActivity : AppCompatActivity() {
             }
         }
 
-        when (val kind = detect(ext, mime)) {
+        // Held past the when because setUpSearch needs it to know whether the
+        // format it is offering to search actually has anything findable in it
+        val kind = detect(ext, mime)
+        when (kind) {
             FileKind.IMAGE -> showImage(container, uri, name, ext)
             FileKind.PLAYER -> showPlayer(container, uri, name, ext)
-            else -> showWeb(container, uri, kind.page, name, ext)
+            else -> showWeb(container, uri, kind, name, ext)
         }
-        setUpSearch(toolbar)
+        setUpSearch(toolbar, kind)
         setUpActions(toolbar, uri, ext, mime)
     }
 
@@ -217,14 +243,20 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     /** In-document search for WebView-rendered formats via findAllAsync. */
-    private fun setUpSearch(toolbar: MaterialToolbar) {
+    private fun setUpSearch(toolbar: MaterialToolbar, kind: FileKind) {
         val bar = findViewById<LinearLayout>(R.id.searchBar)
         val input = findViewById<EditText>(R.id.searchInput)
         val count = findViewById<TextView>(R.id.searchCount)
         val searchItem = toolbar.menu.findItem(R.id.action_search)
 
         val web = webView
-        if (web == null) {
+        // PDF renders in a WebView but has nothing findable in it: pdf.html draws each
+        // page to a canvas with no text layer, so findAllAsync reports no matches
+        // however many times the word appears. Offering the box would be offering a
+        // search that cannot work. Excluded from the README's list of searchable
+        // formats and called out in the 1.5 notes, so this is the code catching up
+        // with what was already documented rather than a new limitation.
+        if (web == null || kind == FileKind.PDF) {
             searchItem.isVisible = false
             return
         }
@@ -328,7 +360,7 @@ class ViewerActivity : AppCompatActivity() {
             override fun onImageLoadError(e: Exception) {
                 // Some formats decode fine in the WebView even when the region decoder gives up
                 container.removeAllViews()
-                showWeb(container, uri, FileKind.IMAGE_WEB.page, name, ext)
+                showWeb(container, uri, FileKind.IMAGE_WEB, name, ext)
             }
         })
         container.addView(imageView, matchParent())
@@ -350,7 +382,7 @@ class ViewerActivity : AppCompatActivity() {
                 exo.release()
                 player = null
                 container.removeAllViews()
-                showWeb(container, uri, FileKind.UNSUPPORTED.page, name, ext)
+                showWeb(container, uri, FileKind.UNSUPPORTED, name, ext)
             }
         })
         exo.setMediaItem(MediaItem.fromUri(uri))
@@ -359,7 +391,7 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun showWeb(container: FrameLayout, uri: Uri, page: String, name: String, ext: String) {
+    private fun showWeb(container: FrameLayout, uri: Uri, kind: FileKind, name: String, ext: String) {
         val web = WebView(this)
         webView = web
 
@@ -412,8 +444,9 @@ class ViewerActivity : AppCompatActivity() {
         // and the loader the page picks cannot disagree
         val ranged = if (useRanges(total)) 1 else 0
         web.loadUrl(
-            "https://$ASSET_HOST/assets/viewer/$page" +
-                "?name=${Uri.encode(name)}&ext=${Uri.encode(ext)}&ranged=$ranged"
+            "https://$ASSET_HOST/assets/viewer/${kind.page}" +
+                "?name=${Uri.encode(name)}&ext=${Uri.encode(ext)}&ranged=$ranged" +
+                pdfjsFloorParams(kind)
         )
     }
 
@@ -474,6 +507,39 @@ class ViewerActivity : AppCompatActivity() {
      */
     private fun useRanges(total: Long): Boolean =
         total >= RANGE_THRESHOLD_BYTES
+
+    /**
+     * Chromium major version of the WebView that will render the page, from a
+     * versionName like "138.0.7204.179".
+     *
+     * Null when there is no provider to ask, the name is not in that shape, or the
+     * number is too low to be a Chromium version at all. A null is treated as new
+     * enough: refusing PDFs on a WebView that works would be the worse mistake, and
+     * pdf.html's nomodule fallback still covers the oldest engines a null could hide.
+     */
+    private fun webViewChromiumMajor(): Int? = runCatching {
+        WebViewCompat.getCurrentWebViewPackage(this)
+            ?.versionName
+            ?.substringBefore('.')
+            ?.toIntOrNull()
+            ?.takeIf { it >= PLAUSIBLE_CHROMIUM_MAJOR }
+    }.getOrNull()
+
+    /**
+     * "&webview=<major>&needs=<floor>" when the WebView about to render is older than
+     * the vendored pdf.js supports, and empty otherwise, including for every other
+     * format: pdf.html is the only viewer loaded as an ES module, and the rest are
+     * classic scripts that any engine can parse.
+     *
+     * Both numbers are passed so the floor lives only in Kotlin rather than being
+     * repeated as a literal inside a user-facing sentence in the page.
+     */
+    private fun pdfjsFloorParams(kind: FileKind): String {
+        if (kind != FileKind.PDF) return ""
+        val major = webViewChromiumMajor() ?: return ""
+        if (major >= PDFJS_MIN_CHROMIUM_MAJOR) return ""
+        return "&webview=$major&needs=$PDFJS_MIN_CHROMIUM_MAJOR"
+    }
 
     /** Content type for the document, from the extension rather than the provider. */
     private fun documentMime(ext: String): String = when (ext) {

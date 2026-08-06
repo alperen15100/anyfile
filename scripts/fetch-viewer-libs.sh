@@ -9,7 +9,9 @@ mkdir -p "$LIB/pptx"
 get() { curl -sfL --retry 2 -o "$LIB/$1" "$2" && echo "fetched $1"; }
 
 get jszip3.min.js       "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
-# The legacy build, which is transpiled for older system WebViews
+# The legacy build, which is transpiled for older system WebViews.
+# Needs Chromium 125+; read "Before upgrading pdf.js" in docs/VENDORED.md first,
+# because Android 8 and 9 top out at 138 and cannot go past it.
 PDFJS="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/legacy/build"
 get pdf.min.mjs         "$PDFJS/pdf.min.mjs"
 get pdf.worker.min.mjs  "$PDFJS/pdf.worker.min.mjs"

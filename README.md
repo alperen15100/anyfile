@@ -70,6 +70,10 @@ the app explains this and suggests re-saving as `.docx` / `.pptx`. Binary `.xls`
 
 Runs on **Android 8.0 (API 26) and up**.
 
+Viewing PDFs also needs Android System WebView 125 or newer (May 2024). Any phone
+still receiving WebView updates is well past that; if yours is not, Gander says so
+when you open a PDF rather than failing quietly.
+
 1. Download the latest APK from [Releases](../../releases/latest):
    `Gander-x.y.apk` runs on every architecture, since the app ships no native code.
 2. Copy it to your phone, tap it, and allow "install unknown apps" when asked.

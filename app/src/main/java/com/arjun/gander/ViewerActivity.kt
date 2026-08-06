@@ -358,7 +358,6 @@ class ViewerActivity : AppCompatActivity() {
         exo.playWhenReady = true
     }
 
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun showWeb(container: FrameLayout, uri: Uri, page: String, name: String, ext: String) {
         val web = WebView(this)
@@ -380,6 +379,12 @@ class ViewerActivity : AppCompatActivity() {
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
 
+        // Neither of these can change while the document is open, and a ranged load
+        // asks for hundreds of pieces, so resolve them once here instead of per
+        // request. documentLength in particular is a round trip to the provider.
+        val total = documentLength(uri)
+        val mime = documentMime(ext)
+
         web.webViewClient = object : WebViewClientCompat() {
             override fun shouldInterceptRequest(
                 view: WebView,
@@ -391,7 +396,7 @@ class ViewerActivity : AppCompatActivity() {
                 if (request.url.host == ASSET_HOST &&
                     request.url.path?.startsWith("/doc/") == true
                 ) {
-                    return docResponse(uri, ext, request.requestHeaders["Range"])
+                    return docResponse(uri, mime, total, request.requestHeaders["Range"])
                 }
                 return assetLoader.shouldInterceptRequest(request.url)
             }
@@ -405,7 +410,7 @@ class ViewerActivity : AppCompatActivity() {
         container.addView(web, matchParent())
         // The load strategy is decided here, not in the page, so the headers we serve
         // and the loader the page picks cannot disagree
-        val ranged = if (useRanges(documentLength(uri))) 1 else 0
+        val ranged = if (useRanges(total)) 1 else 0
         web.loadUrl(
             "https://$ASSET_HOST/assets/viewer/$page" +
                 "?name=${Uri.encode(name)}&ext=${Uri.encode(ext)}&ranged=$ranged"
@@ -422,14 +427,13 @@ class ViewerActivity : AppCompatActivity() {
      *
      * A fresh stream per request: the page asks for many, and out of order.
      */
-    private fun docResponse(uri: Uri, ext: String, range: String?): WebResourceResponse {
-        val mime = when (ext) {
-            "svg" -> "image/svg+xml"
-            else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
-                ?: "application/octet-stream"
-        }
+    private fun docResponse(
+        uri: Uri,
+        mime: String,
+        total: Long,
+        range: String?
+    ): WebResourceResponse {
         return try {
-            val total = documentLength(uri)
             // Ranges are only offered for documents big enough to be worth the extra
             // round trips. Measured on a Nothing Phone 2: a 53 MB scan opened 177 ms
             // faster ranged, while a 251 KB document opened 67 ms slower. Below the
@@ -471,6 +475,12 @@ class ViewerActivity : AppCompatActivity() {
     private fun useRanges(total: Long): Boolean =
         total >= RANGE_THRESHOLD_BYTES
 
+    /** Content type for the document, from the extension rather than the provider. */
+    private fun documentMime(ext: String): String = when (ext) {
+        "svg" -> "image/svg+xml"
+        else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+            ?: "application/octet-stream"
+    }
 
     /** Length in bytes, or -1 when the provider declines to say. */
     private fun documentLength(uri: Uri): Long = runCatching {

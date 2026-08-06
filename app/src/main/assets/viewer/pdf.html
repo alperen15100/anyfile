@@ -99,16 +99,16 @@ loading
       vwStatusDone();
 
       if (doc.numPages < 2) return;
-      var pending = new Set();
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (!e.isIntersecting) return;
           var c = e.target;
-          var n = Number(c.dataset.page);
-          if (pending.has(n)) return;
-          pending.add(n);
+          // Unobserving before rendering is what keeps each page drawn once; the
+          // observer reports a given target at most once per batch, so dropping it
+          // here means no later batch can ask for it again.
           io.unobserve(c);
-          renderPage(doc, n, c).catch(function () { /* leave the page blank */ });
+          renderPage(doc, Number(c.dataset.page), c)
+            .catch(function () { /* leave the page blank */ });
         });
       }, { rootMargin: "200% 0px" });
       canvases.slice(1).forEach(function (c) { io.observe(c); });

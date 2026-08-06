@@ -17,13 +17,12 @@ import java.util.concurrent.Executor
  */
 class GanderApp : Application() {
 
-    /** A throwaway daemon thread rather than a pool: this runs once per process. */
-    private val warmUpThread = Executor { r ->
-        Thread(r, "webview-warmup").apply { isDaemon = true }.start()
-    }
-
     override fun onCreate() {
         super.onCreate()
+        // A throwaway daemon thread rather than a pool: this runs once per process.
+        val warmUpThread = Executor { r ->
+            Thread(r, "webview-warmup").apply { isDaemon = true }.start()
+        }
         // Including the UI-thread half measured slightly better than background-only
         // (604 ms against 620 ms median on a Nothing Phone 2), because it lands while
         // the system is still bringing the activity up rather than once it is running.

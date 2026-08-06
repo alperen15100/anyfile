@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.9 (2026-08-06)
 
 - Files Gander cannot render now offer a **View as text** button instead of a
   dead end, so a file with no extension can be read without renaming it to

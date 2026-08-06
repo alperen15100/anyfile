@@ -2,6 +2,17 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: Roboto, -apple-system, "Segoe UI", sans-serif;
+}
+
+/*
+ * Deliberately on body and not on html. The root element's background paints the
+ * whole viewport, so while html carried this grey, any viewer that recoloured
+ * only body left this showing below a document shorter than the screen. Set on
+ * body alone the browser propagates it to the viewport itself, which fills at any
+ * content height, so a page overriding body is enough and no viewer has to
+ * remember to restate html.
+ */
+body {
   background: #eceff1;
 }
 

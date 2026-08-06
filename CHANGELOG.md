@@ -20,6 +20,9 @@
   APK for every phone instead of four, and about 8 MB instead of 15
 - Very large PDFs are read a piece at a time as you scroll rather than loaded
   whole, so a 50 MB scan opens sooner and does not sit in memory while you read it
+- The PDF viewer background now fills the screen behind a short document, the
+  same fix the other viewers got in 1.8. It showed up most on a PDF that could
+  not be opened, where the message sat on a dark band with a lighter one below
 - PDFs open a little slower than before, by roughly half a second on a fast
   phone. The renderer that was faster cannot be shipped any more; it stopped
   being maintained and no longer meets current Play requirements

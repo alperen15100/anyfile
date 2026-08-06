@@ -3,9 +3,15 @@
 <head>
 <meta charset="utf-8">
 <title>PDF document</title>
+<!-- Deliberately no viewport meta, unlike the other viewers. Without one the
+     WebView lays out at its default 980 CSS px and loadWithOverviewMode zooms
+     that down to fit, which measured on a Nothing Phone 2 as a 1960 px canvas
+     shown across 1080 device px: sharp at fit-to-width, and a max pinch of
+     about 10x rather than 5x. Adding width=device-width shrinks the canvas to
+     922 px, below native, so it would make pages blurrier, not better. -->
 <link rel="stylesheet" href="app.css">
 <style>
-  body { background: #37474f; margin: 0; }
+  body { background: #37474f; }
   #pages { padding: 8px 0; }
   .pg {
     display: block;

@@ -5,11 +5,11 @@
 <title>Image</title>
 <link rel="stylesheet" href="app.css">
 <style>
-  html, body {
-    background: #111111;
-    height: 100%;
-  }
+  /* Height on both: body centres its image against the full viewport, and its
+     100% only resolves if html has a height to resolve against. */
+  html, body { height: 100%; }
   body {
+    background: #111111;
     display: flex;
     align-items: center;
     justify-content: center;

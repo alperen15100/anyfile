@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gander social preview 1280x640</title>
+<!--
+  Source for docs/social-preview.png, the GitHub repo social card.
+
+  The original was rendered from HTML in headless Chrome but the file was never
+  committed, so when the APK size changed from 15 MB to 8 MB the number had to be
+  patched into the raster by hand. This is a rebuild of that source so the next
+  edit is a text change and a re-render.
+
+  Render:  scripts/render-social-preview.sh
+  Size:    1280x640, which is what GitHub asks for.
+
+  Fonts. The original typeface is not recoverable from a PNG. The wordmark is a
+  geometric sans with a single-storey 'a' and equal 'a'/'d' widths, which points
+  at the Futura/Poppins family; Poppins is used here with the tracking tuned to
+  reproduce the measured 582x126px wordmark. The italic is Libre Baskerville,
+  chosen by rendering six candidates and comparing both pixel difference and
+  letterform against the original, where it won on each. If you remember what
+  was actually used, change --sans / --serif and re-render.
+
+  Every position below was measured off the original PNG, so the layout numbers
+  are not guesses.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Libre+Baskerville:ital@0;1&family=Roboto+Mono:wght@700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --sans: 'Poppins', 'Futura', 'Century Gothic', sans-serif;
+    --serif: 'Libre Baskerville', Georgia, serif;
+    --mono: 'Roboto Mono', 'Andale Mono', monospace;
+
+    --navy: #182a45;        /* measured: rgb(24,42,69)   */
+    --red: #c23a20;         /* measured: rgb(194,58,32)  */
+    --slate: #576170;       /* measured: rgb(87,97,112)  */
+    --stamp: #c1553a;
+    --paper-top: #f4eee4;   /* measured at y=30   */
+    --paper-bot: #ede5d5;   /* measured at y=610  */
+    --rule: rgba(120, 96, 50, 0.075);
+    --card: #fdfbf5;        /* measured: rgb(253,251,245) */
+    --card-line: #ccd4da;
+    --frame-outer: #c1bfbc; /* 1px rule, 16px inset */
+    --frame-inner: #79818a; /* 1px rule, 22px inset */
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+
+  .stage {
+    position: relative;
+    width: 1280px;
+    height: 640px;
+    overflow: hidden;
+    /* Ruled paper: 36px pitch, first rule at y=35, over a vertical wash. */
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 35px,
+        var(--rule) 35px 36px
+      ),
+      linear-gradient(to bottom, var(--paper-top), var(--paper-bot));
+    font-family: var(--sans);
+    color: var(--navy);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Two nested hairlines, inset 16px and 22px. */
+  .frame-outer, .frame-inner { position: absolute; pointer-events: none; }
+  .frame-outer { inset: 16px; border: 1px solid var(--frame-outer); }
+  .frame-inner { inset: 22px; border: 1px solid var(--frame-inner); }
+
+  /* ---------- left column ---------- */
+
+  .eyebrow {
+    position: absolute; left: 85px; top: 66px;
+    font-weight: 600; font-size: 18px; letter-spacing: 0.265em;
+    line-height: 1;
+  }
+  .eyebrow .dot { color: var(--red); }
+
+  .wordmark {
+    position: absolute; left: 78px; top: 111px;
+    font-weight: 700; font-size: 168.5px; letter-spacing: -0.0645em;
+    line-height: 1; white-space: nowrap;
+  }
+
+  /* Apple's goose emoji, as in the original. Sized to the measured 164x124 box. */
+  .goose {
+    position: absolute; left: 680px; top: 138px;
+    font-size: 132px; line-height: 1;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  }
+
+  .tagline {
+    position: absolute; left: 86px; top: 300px;
+    font-family: var(--serif); font-style: italic; font-size: 32px;
+    line-height: 1; white-space: nowrap;
+  }
+  .tagline em { color: var(--red); font-style: italic; }
+
+  .formats {
+    position: absolute; left: 85px; top: 373px;
+    font-weight: 700; font-size: 20px; letter-spacing: 0.11em;
+    line-height: 1; white-space: nowrap;
+  }
+  .formats .sep { color: #a9a294; font-weight: 500; margin: 0 6px; }
+
+  .claims {
+    position: absolute; left: 86px; top: 510px;
+    display: flex; align-items: baseline; gap: 37px;
+    line-height: 1; white-space: nowrap;
+  }
+  .claims b { font-weight: 700; font-size: 40px; letter-spacing: -0.01em; }
+  .claims small {
+    font-weight: 600; font-size: 19px; letter-spacing: 0.04em;
+    color: var(--slate); margin-left: 7px;
+  }
+  .claims .bullet {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--red); align-self: center; flex: 0 0 auto;
+  }
+
+  .repo {
+    position: absolute; left: 933px; top: 577px;
+    font-family: var(--mono); font-weight: 700; font-size: 18.2px;
+    letter-spacing: -0.005em; line-height: 1;
+  }
+
+  /* ---------- fanned document cards ---------- */
+
+  .cards { position: absolute; inset: 0; }
+
+  .card {
+    position: absolute;
+    width: 150px; height: 212px;
+    background: var(--card);
+    border-radius: 9px;
+    box-shadow: 0 6px 18px rgba(70, 55, 30, 0.18), 0 1px 3px rgba(70, 55, 30, 0.12);
+    padding: 26px 24px;
+  }
+  /* Folded top-right corner. */
+  .card::after {
+    content: ""; position: absolute; top: 0; right: 0;
+    width: 26px; height: 26px;
+    border-top-right-radius: 9px;
+    background: linear-gradient(225deg, #e4dccc 0 50%, transparent 50%);
+  }
+  .badge {
+    width: 56px; height: 56px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 19px; letter-spacing: 0.02em;
+  }
+  .lines { margin-top: 22px; }
+  .lines i {
+    display: block; height: 7px; border-radius: 4px;
+    background: var(--card-line); margin-bottom: 11px;
+  }
+
+  /* Measured badge centres drive these transforms. */
+  .c-doc { left: 776px; top: 180px; transform: rotate(-9deg);  z-index: 1; }
+  .c-xls { left: 872px; top: 128px; transform: rotate(-5.5deg); z-index: 2; }
+  .c-img { left: 968px; top: 106px;  transform: rotate(-1deg);  z-index: 3; }
+  .c-ppt { left: 1062px; top: 128px; transform: rotate(4deg);  z-index: 4; }
+  .c-pdf { left: 828px; top: 288px; transform: rotate(-7deg);  z-index: 6; }
+  .c-vid { left: 1000px; top: 264px; transform: rotate(3deg);   z-index: 7; }
+
+  .b-doc { background: #1565c0; }
+  .b-xls { background: #2e7d32; }
+  .b-img { background: #7b1fa2; }
+  .b-ppt { background: #ef6c00; }
+  .b-pdf { background: #d32f2f; }
+  .b-vid { background: #ad1457; }
+
+  /* ---------- 0 PERMISSIONS stamp ---------- */
+
+  .stamp {
+    /* Box measured off the original from its four border corners: 528x88.5
+       including the 3px rule, centred at (885, 518), rotated -7.62deg. */
+    position: absolute; left: 617px; top: 471px;
+    width: 528px; height: 88px;
+    border: 3px solid var(--stamp);
+    border-radius: 10px;
+    transform: rotate(-7.62deg);
+    color: var(--stamp);
+    opacity: 0.82;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 7px;
+    z-index: 5;
+  }
+  .stamp .big {
+    font-weight: 700; font-size: 43px; letter-spacing: 0.055em;
+    line-height: 1; white-space: nowrap;
+  }
+  .stamp .small {
+    font-weight: 700; font-size: 16px; letter-spacing: 0.135em;
+    line-height: 1; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+
+  <div class="eyebrow">OPEN SOURCE <span class="dot">&middot;</span> ANDROID <span class="dot">&middot;</span> MIT</div>
+  <div class="wordmark">Gander</div>
+  <div class="goose">🪿</div>
+  <div class="tagline">Take a gander at <em>any</em> file.</div>
+  <div class="formats">PDF <span class="sep">&middot;</span> DOCX <span class="sep">&middot;</span> XLSX <span class="sep">&middot;</span> PPTX <span class="sep">&middot;</span> JPG <span class="sep">&middot;</span> MP4 <span class="sep">&middot;</span> MP3 <span class="sep">&middot;</span> MD</div>
+
+  <div class="cards">
+    <div class="card c-doc"><div class="badge b-doc">DOC</div><div class="lines"><i style="width:100%"></i><i style="width:88%"></i><i style="width:96%"></i><i style="width:70%"></i></div></div>
+    <div class="card c-xls"><div class="badge b-xls">XLS</div><div class="lines"><i style="width:100%"></i><i style="width:82%"></i><i style="width:94%"></i><i style="width:64%"></i></div></div>
+    <div class="card c-img"><div class="badge b-img">IMG</div><div class="lines"><i style="width:96%"></i><i style="width:100%"></i><i style="width:78%"></i><i style="width:88%"></i></div></div>
+    <div class="card c-ppt"><div class="badge b-ppt">PPT</div><div class="lines"><i style="width:100%"></i><i style="width:74%"></i><i style="width:92%"></i><i style="width:84%"></i></div></div>
+    <div class="card c-pdf"><div class="badge b-pdf">PDF</div><div class="lines"><i style="width:92%"></i><i style="width:100%"></i><i style="width:70%"></i><i style="width:86%"></i></div></div>
+    <div class="card c-vid"><div class="badge b-vid">VID</div><div class="lines"><i style="width:100%"></i><i style="width:80%"></i><i style="width:90%"></i><i style="width:66%"></i></div></div>
+  </div>
+
+  <!-- The APK size lives here and nowhere else. Keep it in step with
+       app/build.gradle.kts and the README alt text. -->
+  <div class="claims">
+    <span><b>100%</b><small>OFFLINE</small></span>
+    <span class="bullet"></span>
+    <span><b>8 MB</b><small>APK</small></span>
+    <span class="bullet"></span>
+    <span><b>0</b><small>ADS OR TRACKERS</small></span>
+  </div>
+
+  <div class="stamp">
+    <div class="big">0 PERMISSIONS</div>
+    <div class="small">NO INTERNET &middot; NOTHING LEAVES YOUR PHONE</div>
+  </div>
+
+  <div class="repo">github.com/mokshablr/gander</div>
+</div>
+</body>
+</html>

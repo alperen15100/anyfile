@@ -110,7 +110,12 @@ androidComponents.onVariants { variant ->
     }
 
     // Variant tasks are not registered yet while onVariants runs, so match lazily.
-    tasks.matching { it.name == "assemble$suffix" }
+    //
+    // Both outputs, and that is the point. assemble builds the APK that goes to
+    // GitHub releases; bundle builds the AAB that goes to Play, and it does not
+    // depend on assemble. Guarding only the first left the store upload, the one
+    // build whose permission list is read by users as a promise, unchecked.
+    tasks.matching { it.name == "assemble$suffix" || it.name == "bundle$suffix" }
         .configureEach { dependsOn(checkPermissions) }
 }
 

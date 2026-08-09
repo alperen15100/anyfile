@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Gander no longer takes part in Android's app backup. The recents list was the
+  only thing there was to copy, and a restored one is always empty anyway, because
+  the folder permissions it points at do not survive being moved to another phone.
+  So it was putting your file names into a Drive backup in exchange for nothing
+
 ## 1.9 (2026-08-06)
 
 - Files Gander cannot render now offer a **View as text** button instead of a

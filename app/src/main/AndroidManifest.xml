@@ -9,9 +9,16 @@
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
 
+    <!-- Auto Backup is off because the only thing it could copy is worthless. The recents
+         list is SAF content URIs, and Recents.all filters every entry against
+         contentResolver.persistedUriPermissions; those grants are per install and do not
+         survive a restore, so a restored list renders empty however faithfully it was
+         backed up. Leaving it on sent file names and timestamps to the user's Drive to
+         buy nothing, and put an asterisk on the one claim the app is built around.
+         Thumbnails were never affected: cacheDir is excluded from backup already. -->
     <application
         android:name=".GanderApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"

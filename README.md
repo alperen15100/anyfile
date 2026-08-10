@@ -24,9 +24,9 @@ It cannot phone home because it does not even hold the INTERNET permission.
 
 ## Screenshots
 
-| Home: recents and folders | Folder browsing | PDF |
+| Home: recents and folders | PDF | Photos |
 | :---: | :---: | :---: |
-| ![Recent files with thumbnail previews and granted folders](docs/screenshots/home.png) | ![Browsing a granted folder with previews](docs/screenshots/folder.png) | ![PDF viewer](docs/screenshots/pdf.png) |
+| ![Recent files with thumbnail previews and granted folders](docs/screenshots/home.png) | ![PDF viewer rendering a tenancy agreement](docs/screenshots/pdf.png) | ![Full-size photo in the zoomable image viewer](docs/screenshots/photo.png) |
 
 | Word (.docx) | PowerPoint (.pptx) | Excel (.xlsx) |
 | :---: | :---: | :---: |

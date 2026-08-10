@@ -1,1 +1,1 @@
-Offline, zero-permission viewer for PDF, Office files, photos and media
+Offline PDF, Word and Excel viewer. No ads, no trackers, no internet access.

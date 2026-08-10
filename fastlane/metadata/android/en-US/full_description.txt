@@ -1,24 +1,49 @@
 One small app that opens practically any file, entirely on your phone.
 
-Gander is a viewer for PDF, Word (.docx), Excel (.xlsx, .xls, .csv, .ods), PowerPoint (.pptx), photos (JPG, PNG, WebP, HEIC, GIF, SVG and more), video (MP4, MKV, WebM, MOV and more), audio (MP3, M4A, FLAC, WAV, OGG, Opus), Markdown, plain text and source code. Pinch to zoom, scroll, done.
+Gander is an offline document viewer for Android. Open a PDF, a Word document, a spreadsheet or a photo and it renders straight away, on the device, with no account, no sign-up and no cloud round trip.
 
-Private by construction:
+Every format you are likely to be sent:
 
-* Zero permissions requested
-* No INTERNET permission, so nothing can ever leave your device
-* No ads, no trackers, no analytics, no accounts
+* PDF documents, rendered page by page, pinch to zoom
+* Word documents (.docx)
+* Excel spreadsheets (.xlsx, .xls, .xlsm, .xlsb, .csv, .ods), with tabs for multi-sheet workbooks
+* PowerPoint slides (.pptx)
+* Photos: JPG, PNG, WebP, HEIC, BMP, GIF, SVG, AVIF and more
+* Video: MP4, MKV, WebM, MOV and more
+* Audio: MP3, M4A, FLAC, WAV, OGG, Opus
+* Markdown, plain text, and source code
 
-Files reach Gander only through the system file picker or "Open with" from your file manager. PDFs and Office documents render inside a sandboxed WebView using bundled open source libraries; nothing is uploaded anywhere, ever.
+Private by construction, and you can check it
 
-Features:
+Gander requests no permissions at all. It does not hold the INTERNET permission, so it is structurally unable to send your documents anywhere. There are no ads, no trackers, no analytics and no accounts.
 
-* Recent files with thumbnail previews (images, video frames, PDF pages)
-* Browse folders you grant once, still without any storage permission
-* Deep zoom into huge photos with tiled decoding, EXIF rotation handled
-* Sheet tabs for multi-sheet spreadsheets
-* Markdown rendered as formatted text, dark mode aware
-* Material 3 design, edge to edge, works on Android 8.0+
+You do not have to take my word for any of that. Open App permissions on this page and there is nothing listed. Read the Data safety section. Or read the code. Gander is open source under the MIT licence, and all of it is at https://github.com/mokshablr/gander
 
-Limitations, honestly: complex PowerPoint decks render approximately, spreadsheet charts are not drawn, and legacy binary .doc/.ppt are not supported (binary .xls works). Gander is a viewer, not an editor.
+How files reach it
 
-MIT licensed. Source, issues and APKs: https://github.com/mokshablr/gander
+Gander opens the file you hand it, through the system file picker, through "Open with" from your file manager or another app, or from a folder you grant it once. It does not scan or browse your whole phone, and it never asks for storage permission. That is the privacy design rather than a missing feature. Recent files come back with thumbnail previews, and folders you have granted stay one tap away.
+
+Built for reading on a phone
+
+* Find in document: search inside Word, Excel, PowerPoint, Markdown, text and code, with match navigation
+* Deep zoom into large photos with tiled decoding, and correct rotation read from EXIF
+* Share the open file onward, or jump to the folder it sits in
+* Material 3 design, dark mode, edge to edge
+
+Small, and one download for every phone
+
+About 8 MB, a single build that runs on every processor with no native code at all, on Android 8.0 and newer.
+
+Honest about what it is not
+
+* Gander is a viewer, not an editor
+* PDF text cannot be searched yet. PDF pages are drawn as images with no text layer behind them, so search works in every other format above but not in PDF
+* Legacy binary .doc and .ppt are not supported. Binary .xls is
+* Complex PowerPoint decks render approximately, and spreadsheet charts are not drawn
+* Viewing PDFs needs Android System WebView 125 or newer, and Gander says so plainly if yours is older
+
+If you want an offline PDF and document viewer that simply shows your files and keeps its hands off everything else, that is Gander.
+
+Open source, MIT licensed: https://github.com/mokshablr/gander
+
+Issues and feature requests: https://github.com/mokshablr/gander/issues

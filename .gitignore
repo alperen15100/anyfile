@@ -6,6 +6,10 @@ local.properties
 *.iml
 captures/
 
+# Byte cache from the screenshot generators in scripts/screenshots/
+__pycache__/
+*.pyc
+
 # Signing key stays local, never in the public repo
 keystore/
 dist/

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gander Play Store screenshots</title>
+<!--
+  Source for docs/screenshots/v1.9/NN-*.png, the Play Store listing shots.
+
+  Each .stage below is one finished 1080x1920 screenshot: a caption band over
+  the raw device capture from docs/screenshots/v1.9/raw/. Editing a caption is
+  a text change here followed by a re-render, which is the whole point of
+  keeping the source rather than only the PNGs.
+
+  Render:  scripts/render-screenshot-captions.sh
+  Size:    1080x1920 each, stacked, then cut apart by the script.
+
+  Palette and type follow docs/social-preview.html so the listing and the repo
+  card read as the same product: warm paper, navy text, one red accent,
+  Poppins for the headline and Libre Baskerville italic for the note.
+
+  Every caption has to be true of the shipped build. In particular the PDF shot
+  must not suggest find-in-document: 1.9 removes the search button for PDFs
+  because pdf.js draws pages as canvas with no text layer behind them. Search
+  is real for Word, Excel, slides, Markdown, text and code, and only those
+  captions mention it.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Libre+Baskerville:ital@0;1&display=block" rel="stylesheet">
+<style>
+  :root {
+    --sans: 'Poppins', 'Futura', 'Century Gothic', sans-serif;
+    --serif: 'Libre Baskerville', Georgia, serif;
+
+    --navy: #182a45;
+    --red: #c23a20;
+    --slate: #576170;
+    --paper-top: #f4eee4;
+    --paper-bot: #e9dfcc;
+    --rule: rgba(120, 96, 50, 0.075);
+    --frame: #c9c3b7;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+
+  .stage {
+    position: relative;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Same ruled paper as the repo card, pitch scaled up for the taller frame. */
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 47px,
+        var(--rule) 47px 48px
+      ),
+      linear-gradient(to bottom, var(--paper-top), var(--paper-bot));
+    font-family: var(--sans);
+    color: var(--navy);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .head {
+    flex: 0 0 auto;
+    padding: 74px 76px 0;
+  }
+
+  .tick {
+    width: 62px;
+    height: 6px;
+    background: var(--red);
+    border-radius: 3px;
+    margin-bottom: 30px;
+  }
+
+  h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 54px;
+    line-height: 1.13;
+    letter-spacing: -0.017em;
+  }
+
+  .note {
+    margin: 20px 0 0;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 25px;
+    line-height: 1.4;
+    color: var(--slate);
+  }
+
+  .shot {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 78px 48px;
+  }
+
+  /* height-driven so the rounded corners and shadow hug the capture itself
+     rather than a letterboxed element box */
+  .shot img {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    border-radius: 26px;
+    border: 1px solid var(--frame);
+    box-shadow:
+      0 2px 4px rgba(24, 42, 69, 0.10),
+      0 18px 40px rgba(24, 42, 69, 0.18);
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Open PDFs without the cloud</h1>
+    <p class="note">No account, no upload, no internet permission at all.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/01-pdf.png" alt="A tenancy agreement PDF open in Gander"></div>
+</div>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Zoom deep into full-size photos</h1>
+    <p class="note">Tiled decoding keeps huge images sharp.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/02-photo.png" alt="A high resolution winter photograph filling the screen"></div>
+</div>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Recent files, with real previews</h1>
+    <p class="note">Zero permissions. You choose what Gander sees.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/03-home.png" alt="Gander home screen listing recent files and a granted folder"></div>
+</div>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Every sheet in the workbook</h1>
+    <p class="note">Search inside to jump straight to a figure.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/04-xlsx.png" alt="A multi sheet Excel budget open in Gander"></div>
+</div>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Word files keep their formatting</h1>
+    <p class="note">Headings, tables and lists, exactly as saved.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/05-docx.png" alt="A formatted Word report open in Gander"></div>
+</div>
+
+<div class="stage">
+  <div class="head">
+    <div class="tick"></div>
+    <h1>Slide decks, no suite required</h1>
+    <p class="note">One 8 MB app for documents, photos, video and audio.</p>
+  </div>
+  <div class="shot"><img src="screenshots/v1.9/raw/06-pptx.png" alt="A PowerPoint deck open in Gander"></div>
+</div>
+
+</body>
+</html>

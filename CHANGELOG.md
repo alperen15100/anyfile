@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- There is an About screen now, in the menu on the home screen. Rather than repeat
+  a promise typed into it months earlier, it asks Android what permissions this
+  install actually requests and shows you the answer. The build has always failed
+  if a dependency slipped one in; this is the same check somewhere you can see it
+- The full licence text for every bundled rendering library now ships inside the
+  app and opens from About, drawn by Gander's own Markdown viewer. It was in the
+  repository before, which is not the same as travelling with the app, and
+  travelling with the app is what those licences ask for
 - Gander no longer takes part in Android's app backup. The recents list was the
   only thing there was to copy, and a restored one is always empty anyway, because
   the folder permissions it points at do not survive being moved to another phone.

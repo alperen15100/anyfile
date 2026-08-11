@@ -2,6 +2,7 @@ package com.arjun.gander
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -22,7 +23,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -84,6 +88,18 @@ class MainActivity : AppCompatActivity() {
 
         toolbar = findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { backCallback.handleOnBackPressed() }
+        // render() rewrites the title and navigation icon on every resume and on
+        // every folder change, but never touches the menu, so inflating once here
+        // survives all of it.
+        toolbar.inflateMenu(R.menu.main_menu)
+        toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_about) {
+                showAbout()
+                true
+            } else {
+                false
+            }
+        }
         findViewById<RecyclerView>(R.id.list).let {
             it.layoutManager = LinearLayoutManager(this)
             it.adapter = adapter
@@ -105,6 +121,106 @@ class MainActivity : AppCompatActivity() {
                 .setData(uri)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         )
+    }
+
+    /**
+     * The app's only About surface. Carries the version, who made it, and the
+     * permission list read back out of Android, plus the way in to the licence
+     * text the bundled libraries require to travel with the binary.
+     */
+    private fun showAbout() {
+        val view = layoutInflater.inflate(R.layout.dialog_about, null)
+
+        val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }
+            .getOrNull().orEmpty()
+        view.findViewById<TextView>(R.id.aboutVersion).text =
+            getString(R.string.about_version, version)
+
+        val permissions = requestedPermissions()
+        val field = view.findViewById<TextView>(R.id.aboutPermissions)
+        when {
+            // Only when the package manager refused to answer. Printing "none"
+            // for a question we could not ask would be the one dishonest thing
+            // this dialog could do, so it says nothing at all instead.
+            permissions == null ->
+                view.findViewById<View>(R.id.aboutPermissionsCard).visibility = View.GONE
+            permissions.isEmpty() -> field.setText(R.string.about_permissions_none)
+            // Never expected: assembleRelease fails before a build can get here.
+            // Shown rather than swallowed, because a broken promise is the thing
+            // a reader of this dialog most needs to know.
+            else -> {
+                field.text = permissions.joinToString("\n")
+                field.setTextColor(
+                    MaterialColors.getColor(field, com.google.android.material.R.attr.colorError)
+                )
+            }
+        }
+
+        view.findViewById<View>(R.id.aboutAuthor)
+            .setOnClickListener { openUrl(getString(R.string.url_author)) }
+        view.findViewById<View>(R.id.aboutSource)
+            .setOnClickListener { openUrl(getString(R.string.url_source)) }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.about_gander)
+            .setView(view)
+            .setPositiveButton(R.string.about_close, null)
+            .show()
+
+        view.findViewById<View>(R.id.aboutLicences).setOnClickListener {
+            dialog.dismiss()
+            openLicences()
+        }
+    }
+
+    /**
+     * What Android says this install asks for, or null if it would not say.
+     *
+     * androidx.core declares DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION under our
+     * own package name so libraries can registerReceiver safely. It is signature
+     * level, self-granted and never shown to a user, which is why the permission
+     * check in build.gradle.kts allowlists it as well. Anything else carrying our
+     * package prefix is ours on the same reasoning, so drop those and report what
+     * is left, which is the list Android would actually confront someone with.
+     */
+    private fun requestedPermissions(): List<String>? = runCatching {
+        packageManager
+            .getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            .orEmpty()
+            .filterNot { it.startsWith("$packageName.") }
+    }.getOrNull()
+
+    /**
+     * Gander shows its own licences. The asset is copied into the cache and
+     * handed to the viewer as a plain path, so the bundled Markdown renderer
+     * draws it and there is no second document surface to keep alive.
+     *
+     * Copied on every open rather than once: the cache outlives an app update,
+     * and an update is exactly when the text changes. The viewer only records
+     * content:// URIs in Recents, so this cannot turn up there.
+     */
+    private fun openLicences() {
+        val file = File(cacheDir, getString(R.string.licences_file_name))
+        val opened = runCatching {
+            assets.open(LICENCES_ASSET).use { input ->
+                file.outputStream().use { input.copyTo(it) }
+            }
+            startActivity(
+                Intent(this, ViewerActivity::class.java)
+                    .putExtra(ViewerActivity.EXTRA_PATH, file.absolutePath)
+            )
+        }.isSuccess
+        if (!opened) Toast.makeText(this, R.string.licences_failed, Toast.LENGTH_SHORT).show()
+    }
+
+    /**
+     * Hands a URL to whichever browser the user has. Gander never fetches
+     * anything itself, and without the INTERNET permission it could not.
+     */
+    private fun openUrl(url: String) {
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            .onFailure { Toast.makeText(this, R.string.no_browser, Toast.LENGTH_SHORT).show() }
     }
 
     private fun render() {
@@ -280,6 +396,7 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         val DIR_COLOR = 0xFFF9A825.toInt()
         val ADD_COLOR = 0xFF1565C0.toInt()
+        const val LICENCES_ASSET = "licences.md"
     }
 
     private class RowAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {

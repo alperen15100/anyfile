@@ -6,6 +6,13 @@ vendored (not fetched at runtime) because the app has no network access at all.
 
 `scripts/fetch-viewer-libs.sh` re-downloads every file below from its upstream.
 
+This table is the provenance record. The *shipped* notice is
+`app/src/main/assets/licences.md`, reachable from the app's About dialog, and it
+carries the full licence texts because Apache-2.0 §4(a) and the MIT and BSD
+notice clauses require them to travel with the binary rather than sit in a repo.
+Adding, dropping or upgrading a library here means editing that file in the same
+commit.
+
 | File | Project | Version | License | Upstream |
 | --- | --- | --- | --- | --- |
 | `pdf.min.mjs` | pdf.js (legacy build) | 5.7.284 | Apache-2.0 | https://github.com/mozilla/pdf.js |

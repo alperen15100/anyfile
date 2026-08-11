@@ -45,7 +45,9 @@ itself. That makes the Chromium floor a fact to check rather than a preference.
 Bumping pdf.js means editing together the two `pdf.*.mjs` rows above, `PDFJS` in
 `scripts/fetch-viewer-libs.sh`, and `PDFJS_MIN_CHROMIUM_MAJOR`. The card's wording
 lives in `pdf.html` and reads both version numbers out of the query string, so it
-needs no edit.
+needs no edit. It also reads `locked`, which says the reader has no way to update
+the WebView and selects wording that does not ask them to; that flag is about the
+phone rather than about pdf.js, so a version bump does not affect it either.
 
 Notes for packagers (F-Droid and friends): the minified files are unmodified
 upstream distribution artifacts. If unminified sources are required, every

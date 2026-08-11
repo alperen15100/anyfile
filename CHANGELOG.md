@@ -6,6 +6,16 @@
   only thing there was to copy, and a restored one is always empty anyway, because
   the folder permissions it points at do not survive being moved to another phone.
   So it was putting your file names into a Drive backup in exchange for nothing
+- Phones whose WebView is too old for PDFs are recognised properly now. The check
+  read the version off the WebView package, and a manufacturer that numbers its
+  own builds 15.0.4.326 was read as version 15, dismissed as not a real version,
+  and let through. Those phones then failed on the PDF with a parser error naming
+  a file nobody has heard of. The version now comes from the browser engine itself,
+  which reports it the same way no matter who makes the phone (thanks @sdiddssew)
+- On a phone whose WebView cannot be updated, because the manufacturer supplies it
+  and allows no replacement, the PDF message no longer tells you to go and update
+  it. It says PDFs will not work on this phone and leads with the fact that every
+  other format still opens, which is the part you can act on
 
 ## 1.9 (2026-08-06)
 

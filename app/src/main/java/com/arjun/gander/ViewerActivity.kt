@@ -83,8 +83,31 @@ class ViewerActivity : AppCompatActivity() {
          * something like "1.0" is telling us it does not use Chromium version numbers,
          * not that it predates them, and refusing its PDFs would break a device that
          * works today.
+         *
+         * This is why the user agent is asked first. Huawei numbers its WebView 12.1.x,
+         * 14.0.x, 15.0.x, so a genuinely old engine parsed to 15 from the package alone,
+         * landed under this floor, and was waved through as unreadable. Reading Chrome/
+         * out of the user agent gives the engine version whatever the vendor calls the
+         * package, and a provider that reports neither is caught by
+         * [LOCKED_WEBVIEW_PACKAGES] instead of by guessing.
          */
         private const val PLAUSIBLE_CHROMIUM_MAJOR = 30
+
+        /** The Chromium major in a WebView user agent, as in "Chrome/138.0.7204.179". */
+        private val CHROME_TOKEN = Regex("""Chrome/(\d+)""")
+
+        /**
+         * WebView providers that cannot be swapped for another one.
+         *
+         * On a Huawei device without Google services the provider is pinned to this
+         * package: Chrome and Android System WebView are both rejected, because they are
+         * signed against a certificate chain the device does not carry. Two consequences.
+         * The card must not tell these users to update Android System WebView, since they
+         * cannot. And a version we failed to read is old rather than unknown, because no
+         * Huawei build reaches the pdf.js floor, so this is the one case where an
+         * unreadable version blocks instead of being waved through.
+         */
+        private val LOCKED_WEBVIEW_PACKAGES = setOf("com.huawei.webview")
     }
 
     private var webView: WebView? = null
@@ -446,7 +469,7 @@ class ViewerActivity : AppCompatActivity() {
         web.loadUrl(
             "https://$ASSET_HOST/assets/viewer/${kind.page}" +
                 "?name=${Uri.encode(name)}&ext=${Uri.encode(ext)}&ranged=$ranged" +
-                pdfjsFloorParams(kind)
+                pdfjsFloorParams(kind, web.settings.userAgentString)
         )
     }
 
@@ -509,36 +532,57 @@ class ViewerActivity : AppCompatActivity() {
         total >= RANGE_THRESHOLD_BYTES
 
     /**
-     * Chromium major version of the WebView that will render the page, from a
-     * versionName like "138.0.7204.179".
+     * Chromium major version of the WebView that will render the page.
      *
-     * Null when there is no provider to ask, the name is not in that shape, or the
-     * number is too low to be a Chromium version at all. A null is treated as new
-     * enough: refusing PDFs on a WebView that works would be the worse mistake, and
-     * pdf.html's nomodule fallback still covers the oldest engines a null could hide.
+     * The user agent is asked first, because its Chrome/ token is the engine version
+     * whatever the provider calls its package, and a vendor scheme like Huawei's
+     * "15.0.4.326" says nothing about the engine. The package versionName is kept as a
+     * fallback for a provider whose user agent carries no Chrome/ token at all.
+     *
+     * Null when neither source answers, or when both are too low to be a Chromium
+     * version. A null is treated as new enough unless the provider is locked: refusing
+     * PDFs on a WebView that works would be the worse mistake, and pdf.html's nomodule
+     * fallback still covers the oldest engines a null could hide.
      */
-    private fun webViewChromiumMajor(): Int? = runCatching {
-        WebViewCompat.getCurrentWebViewPackage(this)
+    private fun webViewChromiumMajor(userAgent: String?): Int? = runCatching {
+        val fromUa = userAgent
+            ?.let { CHROME_TOKEN.find(it) }
+            ?.groupValues?.get(1)
+            ?.toIntOrNull()
+            ?.takeIf { it >= PLAUSIBLE_CHROMIUM_MAJOR }
+        fromUa ?: WebViewCompat.getCurrentWebViewPackage(this)
             ?.versionName
             ?.substringBefore('.')
             ?.toIntOrNull()
             ?.takeIf { it >= PLAUSIBLE_CHROMIUM_MAJOR }
     }.getOrNull()
 
+    /** Whether the WebView about to render cannot be swapped for a different one. */
+    private fun webViewProviderIsLocked(): Boolean = runCatching {
+        WebViewCompat.getCurrentWebViewPackage(this)?.packageName in LOCKED_WEBVIEW_PACKAGES
+    }.getOrDefault(false)
+
     /**
-     * "&webview=<major>&needs=<floor>" when the WebView about to render is older than
-     * the vendored pdf.js supports, and empty otherwise, including for every other
-     * format: pdf.html is the only viewer loaded as an ES module, and the rest are
-     * classic scripts that any engine can parse.
+     * The parameters telling pdf.html it cannot render, and empty otherwise, including
+     * for every other format: pdf.html is the only viewer loaded as an ES module, and
+     * the rest are classic scripts that any engine can parse.
      *
-     * Both numbers are passed so the floor lives only in Kotlin rather than being
-     * repeated as a literal inside a user-facing sentence in the page.
+     * "&webview=<major>&needs=<floor>" when the engine is older than the vendored
+     * pdf.js supports. Both numbers are passed so the floor lives only in Kotlin rather
+     * than being repeated as a literal inside a user-facing sentence in the page.
+     *
+     * "&locked=1" is added when updating the WebView is not something the reader can
+     * do, so the page can drop the advice to go and update it. On a locked provider
+     * whose version would not parse, that flag goes out on its own with no major beside
+     * it, which is why the page gates on either parameter rather than on the version.
      */
-    private fun pdfjsFloorParams(kind: FileKind): String {
+    private fun pdfjsFloorParams(kind: FileKind, userAgent: String?): String {
         if (kind != FileKind.PDF) return ""
-        val major = webViewChromiumMajor() ?: return ""
+        val locked = webViewProviderIsLocked()
+        val major = webViewChromiumMajor(userAgent)
+            ?: return if (locked) "&needs=$PDFJS_MIN_CHROMIUM_MAJOR&locked=1" else ""
         if (major >= PDFJS_MIN_CHROMIUM_MAJOR) return ""
-        return "&webview=$major&needs=$PDFJS_MIN_CHROMIUM_MAJOR"
+        return "&webview=$major&needs=$PDFJS_MIN_CHROMIUM_MAJOR" + if (locked) "&locked=1" else ""
     }
 
     /** Content type for the document, from the extension rather than the provider. */

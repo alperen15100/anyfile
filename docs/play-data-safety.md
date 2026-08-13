@@ -4,7 +4,12 @@ Internal reference for filling in the Play Console. Written to match
 [the privacy policy](privacy.html) exactly, because Google reviews the two against
 each other and a disagreement between them is a common reason for rejection.
 
-Last checked against the code: 9 August 2026, version 1.9 (versionCode 11).
+Last checked against the code: 13 August 2026, version **1.10 (versionCode 12)**.
+
+Note for anyone comparing against an older build: the backup section below relies
+on `android:allowBackup="false"`, which arrived in 1.10 (`2c3076d`). The released
+1.9 shipped `true`, verified against tag `v1.9` (`7527ad6`). 1.10 is the first
+build to reach Play, so it is the artifact Google reviews these answers against.
 
 The short version: **no data collected, no data shared.** Everything below explains
 why that is the honest answer and not a shortcut.
@@ -181,6 +186,10 @@ and at the source.
 
 ## Re-check this before each release
 
+- **The version stamp at the top of this file.** It is the only line here with no
+  automated check behind it, and it silently described 1.10's backup behaviour
+  under a 1.9 heading for four days. Update it in the `vX.Y:` release commit,
+  alongside the other three files that commit already touches.
 - The permission list is still just the signature-level one. The Gradle
   `check<Variant>Permissions` task enforces this and fails the build otherwise.
 - No dependency has been added that phones home.

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.10 (2026-08-13)
 
 - There is an About screen now, in the menu on the home screen. Rather than repeat
   a promise typed into it months earlier, it asks Android what permissions this

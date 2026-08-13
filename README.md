@@ -18,6 +18,9 @@ Every phone ships with a dozen half-viewers that bounce your documents to cloud 
 Gander is the opposite: one small APK (about 8 MB) that renders everything **on the device**.
 It cannot phone home because it does not even hold the INTERNET permission.
 
+**[arjun.maniyani.com/gander](https://arjun.maniyani.com/gander/)** &middot;
+[Privacy policy](https://arjun.maniyani.com/gander/privacy.html)
+
 <p align="center">
   <img src="docs/demo.gif" width="300" alt="Gander demo: thumbnail recents, folder browsing, PDF, Word, Excel and Markdown viewing">
 </p>
@@ -42,6 +45,7 @@ It cannot phone home because it does not even hold the INTERNET permission.
 - **Find in document**: search inside Word, Excel, slides, Markdown, text and code with match navigation
 - **Share and locate**: send the open file to any app, or jump to its folder in the file manager
 - **Private by construction**: no permissions, no INTERNET, no analytics, no accounts, nothing leaves the phone
+- **Checks its own promise**: the About screen asks Android what the app requests and shows you the answer, next to the full licence text for every bundled library
 - **Modern Android**: Material 3, dark mode, edge to edge, works on Android 8.0+
 
 ## Supported formats
@@ -165,5 +169,7 @@ If Gander is useful to you, a star helps other people find it.
 
 ## License
 
-[MIT](LICENSE). Vendored viewer libraries keep their own licenses, listed above;
-all are MIT/Apache/BSD and compatible.
+[MIT](LICENSE), Copyright (c) 2026 [Arjun Maniyani](https://arjun.maniyani.com/).
+Vendored viewer libraries keep their own licenses, listed above; all are
+MIT/Apache/BSD and compatible. The full text of every one of them ships inside
+the app, in `app/src/main/assets/licences.md`, reachable from About.

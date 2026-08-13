@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gander - offline file viewer for Android</title>
+<meta name="description" content="Gander opens PDF, Word, Excel, PowerPoint, photos, video, audio, Markdown and code on Android. Zero permissions, no ads, no trackers, and no internet permission at all.">
+<meta name="theme-color" content="#fcf6eb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f141a" media="(prefers-color-scheme: dark)">
+<meta name="author" content="Arjun Maniyani">
+<link rel="canonical" href="https://arjun.maniyani.com/gander/">
+<!--
+  Served at https://arjun.maniyani.com/gander/. Shares the type, palette and
+  printed-sheet frame of privacy.html so the two read as one site, and holds to
+  the same rule: no webfonts, no analytics, no external request of any kind. An
+  app that ships without the INTERNET permission should not have a home page
+  that quietly loads six third-party assets to describe it.
+
+  The JSON-LD is inert data rather than a fetch, so it costs nothing and keeps
+  that property. It exists so the authorship is machine-readable: every URL this
+  project owns reads "mokshablr", and without this a crawler has no way to tie
+  the app to the person who wrote it.
+-->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Gander",
+  "description": "Offline file viewer for Android. Opens PDF, Word, Excel, PowerPoint, photos, video, audio, Markdown and code with zero permissions and no internet access.",
+  "url": "https://arjun.maniyani.com/gander/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Android 8.0+",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "privacyPolicy": "https://arjun.maniyani.com/gander/privacy.html",
+  "codeRepository": "https://github.com/mokshablr/gander",
+  "author": {
+    "@type": "Person",
+    "name": "Arjun Maniyani",
+    "url": "https://arjun.maniyani.com/",
+    "sameAs": ["https://github.com/mokshablr"]
+  }
+}
+</script>
+<style>
+  /* Both themes are one ground with a light source above it: no panel, so the
+     centre and the margins are the same surface, and the depth comes from how
+     far that ground falls rather than from stacking surfaces.
+
+     Light took four attempts, and the failures had two causes. The first was
+     range: a near-white page has nowhere left to go up, so a brighter top edge
+     cannot read as a glow, and the light has to be spent on the fall instead.
+     This one drops 0.133 in OKLCH lightness from the top edge to the bottom,
+     against 0.094 for the version before it and 0.043 for dark. The second was
+     hue. Warm paper that holds its saturation while it darkens turns to gold,
+     which is what happened at 0.018 rising to 0.043. Here the chroma falls with
+     the lightness, 0.024 down to 0.019, the same ratio dark uses, and the shade
+     lands on warm stone rather than tan, which is what shade on paper actually
+     does. Nothing here is white; the brightest pixel is #fcf6eb. */
+  :root {
+    --desk-top:  #f5e9da;
+    --desk-bot:  #d2c9bd;
+    --sheet:     transparent;
+    --sheet-shadow: none;
+    /* Light only. Switched off for the two dark selectors further down, so the
+       frozen dark palette keeps its plain top-to-bottom wash. */
+    --glow: radial-gradient(300% 60% at 50% -8%,
+              rgba(252, 246, 236, 1) 0%,
+              rgba(252, 246, 236, 0.92) 20%,
+              rgba(252, 246, 236, 0.55) 40%,
+              rgba(252, 246, 236, 0.18) 64%,
+              rgba(252, 246, 236, 0) 88%);
+    /* Translucent, not a tint: the block lifts by a fixed amount above whatever
+       the ground is doing behind it, the grain carries straight through, and it
+       can never harden into the floating white sheet that got rejected. */
+    --card:      rgba(252, 246, 236, 0.34);
+    --ink:       #1a222c;
+    --ink-soft:  #4d5865;
+    --ink-faint: #686258;
+    --red:       #af2d18;
+    --blue:      #14539f;
+    --green:     #2b6b2f;
+    --rule:      rgba(26, 34, 44, 0.19);
+    --rule-firm: rgba(26, 34, 44, 0.44);
+    --grain:     0.055;
+    --grain-blend: multiply;
+    --logo-shadow: 0 1px 2px rgba(44, 36, 25, 0.24), 0 6px 18px rgba(44, 36, 25, 0.16);
+    --doc-face:      #fcf7ee;
+    --switch-bg:     #f5ecdf;
+    --switch-on-bg:  #1a222c;
+    --switch-on-fg:  #f2eade;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --geo:   Futura, "Century Gothic", "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+    --mono:  ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* The dark values appear twice on purpose: once for the OS preference and
+     once for an explicit choice from the switcher, because a media query and an
+     attribute selector cannot be combined in plain CSS. Keep the two in step. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --desk-top:  #161d26;
+      --desk-bot:  #0e131a;
+      --sheet:     transparent;
+      --sheet-shadow: none;
+      --card:      #1a222c;
+      --ink:       #e7e1d5;
+      --ink-soft:  #9ba6b2;
+      --ink-faint: #6d7883;
+      --red:       #e2795f;
+      --blue:      #90caf9;
+      --green:     #7fb883;
+      --rule:      rgba(231, 225, 213, 0.16);
+      --rule-firm: rgba(231, 225, 213, 0.30);
+      --grain:     0.05;
+      --grain-blend: screen;
+      --logo-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 3px 12px rgba(0,0,0,0.35);
+      --doc-face:      #ffffff;
+      --switch-bg:     #1a222c;
+      --switch-on-bg:  #e7e1d5;
+      --switch-on-fg:  #0e131a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --desk-top:  #161d26;
+    --desk-bot:  #0e131a;
+    --sheet:     transparent;
+    --sheet-shadow: none;
+    --card:      #1a222c;
+    --ink:       #e7e1d5;
+    --ink-soft:  #9ba6b2;
+    --ink-faint: #6d7883;
+    --red:       #e2795f;
+    --blue:      #90caf9;
+    --green:     #7fb883;
+    --rule:      rgba(231, 225, 213, 0.16);
+    --rule-firm: rgba(231, 225, 213, 0.30);
+    --grain:     0.05;
+    --grain-blend: screen;
+    --logo-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 3px 12px rgba(0,0,0,0.35);
+    --doc-face:      #ffffff;
+    --switch-bg:     #1a222c;
+    --switch-on-bg:  #e7e1d5;
+    --switch-on-fg:  #0e131a;
+  }
+
+  /* The glow is the one thing the two themes do not share, and it is deliberately
+     kept out of the blocks above so those stay exactly as they were. Dark is a
+     plain vertical wash and has to remain one. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --glow: none; }
+  }
+  :root[data-theme="dark"] { --glow: none; }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    overflow-x: clip;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 5vw, 2rem) 5rem;
+    /* Two layers, both pinned to the viewport: a wide soft source sitting just
+       off the top edge, over the ramp it falls into. The source is far wider
+       than it is tall on purpose, so the sheet and the margins sit at almost
+       the same brightness at any given height and the ellipse never resolves
+       into a shape you can point at. */
+    background-image: var(--glow),
+                      linear-gradient(to bottom, var(--desk-top), var(--desk-bot));
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: clamp(16.5px, 0.55rem + 0.55vw, 18.5px);
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Paper grain. An inline feTurbulence, so still zero requests. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--grain);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---- the framed document ---- */
+
+  .sheet {
+    position: relative;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 5vw, 4rem) clamp(2.5rem, 6vw, 4rem);
+    background: var(--sheet);
+    box-shadow: var(--sheet-shadow);
+    z-index: 2;
+  }
+
+  .sheet::before,
+  .sheet::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  .sheet::before { inset: 0;   border: 1px solid var(--rule); }
+  .sheet::after  { inset: 6px; border: 1px solid var(--rule-firm); }
+
+  @media (max-width: 40rem) {
+    .sheet::before, .sheet::after { display: none; }
+    .sheet { padding-left: 0; padding-right: 0; }
+  }
+
+  @media (min-width: 40.001rem) {
+    .masthead::before { inset: -1.5rem -1rem 0; }
+  }
+
+  /* ---- masthead ---- */
+
+  .masthead {
+    position: relative;
+    margin-bottom: clamp(2rem, 5vw, 3.25rem);
+    padding-bottom: clamp(1.5rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--rule-firm);
+  }
+
+  .masthead::before {
+    content: "";
+    position: absolute;
+    inset: -1.5rem 0 0;
+    z-index: -1;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 35px,
+      var(--rule) 35px 36px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 82%);
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 82%);
+  }
+
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .lockup svg {
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 9px;
+    box-shadow: var(--logo-shadow);
+  }
+
+  .wordmark {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 1.42rem;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .eyebrow {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.66rem;
+    letter-spacing: 0.265em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.7rem;
+  }
+
+  .eyebrow .dot { color: var(--red); }
+
+  h1 {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 1.2rem + 3.6vw, 3.3rem);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    margin: 0 0 0.85rem;
+    text-wrap: balance;
+  }
+
+  .dateline {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  /* ---- the claim ---- */
+
+  .claim {
+    margin: 0 0 1.5rem;
+    font-size: clamp(1.34rem, 0.9rem + 1.7vw, 1.78rem);
+    line-height: 1.28;
+    font-style: italic;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  .claim strong { font-style: normal; font-weight: 600; }
+
+  .lede { font-size: 1.06em; }
+
+  /* ---- the four numbers ---- */
+
+  .stats {
+    margin: 2rem 0 2.5rem;
+    padding: 1.35rem 1.5rem 1.4rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--red);
+    /* Column count is fixed at each width rather than left to auto-fit, which
+       resolved to three here and stranded the fourth metric alone on a second
+       row. Four across or a square; never three and an orphan. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.4rem 1.5rem;
+  }
+
+  /* 48rem, not 34rem. The four-column width is not monotonic with the viewport:
+     the sheet caps at 44rem while its padding keeps growing with 5vw, and below
+     40rem that padding drops to zero, so a column is 96px at 560px, 114px at
+     640px, 112px at 700px and 114px from 1280px up. Four columns only get the
+     114px the longest label needs from 48rem, so below that it stays a square. */
+  @media (min-width: 48rem) {
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  .stats div { min-width: 0; }
+
+  .stats dt {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin: 0 0 0.3rem;
+  }
+
+  .stats dd {
+    margin: 0;
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.56rem;
+    /* Sized so the longest label, ADS OR TRACKERS, holds one line in a quarter
+       column at the *narrowest* the column ever gets. That is not the narrowest
+       viewport: the sheet caps at 44rem while its padding keeps growing with
+       5vw until 1280px, so the text column shrinks as the window widens. */
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  /* ---- sections ---- */
+
+  section { margin-top: clamp(2.5rem, 6vw, 3.75rem); }
+
+  h2 {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 1.16rem;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule-firm);
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+
+  /* Sized and weighted to read as part of the heading rather than a speck
+     beside it. It was already on the heading's baseline; at a third the height
+     and regular weight it just looked dropped. */
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    flex: none;
+  }
+
+  p { margin: 0 0 1.1rem; }
+  section > p:last-child, li > p:last-child { margin-bottom: 0; }
+
+  ul.kept { margin: 0 0 1.1rem; padding: 0; list-style: none; }
+
+  ul.kept li {
+    padding: 0.9rem 0 0.95rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  ul.kept li:first-child { border-top: 1px solid var(--rule); }
+
+  ul.kept b {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.88em;
+    letter-spacing: 0.005em;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  ul.plain { margin: 0 0 1.1rem; padding-left: 1.15rem; }
+  ul.plain li { margin-bottom: 0.5rem; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.83em;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+  }
+
+  /* The signing fingerprint. Long, and it must stay copyable in one piece. */
+  .fingerprint {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.7;
+    margin: 0 0 1.1rem;
+    padding: 0.85rem 1rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+    user-select: all;
+  }
+
+  a {
+    color: var(--ink);
+    text-decoration-color: var(--red);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    transition: color 0.15s ease;
+  }
+  a:hover { color: var(--red); }
+  a:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  strong { font-weight: 600; }
+
+  /* ---- colophon ---- */
+
+  footer {
+    margin-top: clamp(3rem, 7vw, 4.5rem);
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--rule-firm);
+    font-size: 0.85em;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    align-items: baseline;
+  }
+
+  footer .mit {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* ---- theme switcher ----
+     TEMPORARY, for comparing the two palettes during review. To remove it:
+     delete this block, the .theme-switch markup, the script at the end of
+     the body, and both :root[data-theme="dark"] rules (the token block and
+     the --glow: none line), then the media query alone drives the theme
+     again exactly as before. */
+
+  .theme-switch {
+    position: fixed;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 10;
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule-firm);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+
+  .theme-switch button {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.56rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.42rem 0.6rem;
+    border: 0;
+    cursor: pointer;
+    background: var(--switch-bg);
+    color: var(--ink-soft);
+  }
+
+  .theme-switch button:hover { color: var(--ink); }
+
+  /* Tokens rather than root-scoped overrides: a :root[data-theme] prefix
+     outranks [aria-pressed] and was repainting the pressed button's background
+     back to the unpressed tone, leaving near-black text on it in dark. */
+  .theme-switch button[aria-pressed="true"] {
+    background: var(--switch-on-bg);
+    color: var(--switch-on-fg);
+  }
+
+  .theme-switch button:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: -2px;
+  }
+
+  /* ---- motion ----
+     Only the logo and the accent rule, as on the policy page. Nothing that
+     carries information starts at opacity 0. */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lockup svg {
+      animation: settle 0.7s cubic-bezier(0.22, 0.68, 0.3, 1) backwards;
+    }
+    .wordmark {
+      animation: slide 0.7s cubic-bezier(0.22, 0.68, 0.3, 1) 0.08s backwards;
+    }
+    .stats {
+      animation: sweep 0.85s cubic-bezier(0.4, 0, 0.2, 1) 0.25s backwards;
+    }
+  }
+
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(-6px) rotate(-7deg); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes slide {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes sweep {
+    from { border-left-color: transparent; }
+    to   { border-left-color: var(--red); }
+  }
+
+  @media print {
+    body {
+      background: #fff;
+      color: #000;
+      font-size: 11pt;
+      padding: 0;
+    }
+    body::before, .masthead::before { display: none; }
+    .sheet::before, .sheet::after { display: none; }
+    .sheet { max-width: none; padding: 0; background: none; box-shadow: none; }
+    .theme-switch { display: none; }
+    :root { --doc-face: #ffffff; }
+    .stats { border: 1px solid #999; border-left-width: 2px; background: none; }
+    .fingerprint { background: none; border: 1px solid #999; }
+    a { color: #000; text-decoration: none; }
+    a[href^="http"]::after {
+      content: " (" attr(href) ")";
+      font-family: monospace;
+      font-size: 8.5pt;
+      word-break: break-all;
+    }
+    section, footer { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TEMPORARY review control, see .theme-switch in the stylesheet for removal -->
+<div class="theme-switch" role="group" aria-label="Colour theme">
+  <button type="button" data-set="light">Light</button>
+  <button type="button" data-set="dark">Dark</button>
+  <button type="button" data-set="system">System</button>
+</div>
+
+<div class="sheet">
+
+  <header class="masthead">
+
+    <div class="lockup">
+      <svg viewBox="18 18 72 72" role="img" aria-label="Gander app icon">
+        <rect x="18" y="18" width="72" height="72" rx="16" fill="#F6F1E6"/>
+        <g transform="translate(-3.5,-1)">
+          <path fill="#262A2E" d="M64.5,50 L64.5,34 C64.5,29.6 63.9,26.6 62.4,25.1 C61.2,23.9 59.6,23.25 57.9,23.3 C55.1,23.4 52.9,25.3 52.3,28.0 L46.6,29.8 C45.9,30.05 45.9,30.75 46.6,30.95 L52.4,32.3 C53.1,34.1 54.7,35.3 56.6,35.6 C57.7,35.8 58.2,36.7 58.2,38.4 L58.2,50 Z"/>
+          <g transform="rotate(-22,56.4,31.9)">
+            <path fill="#FDFBF5" d="M52.9,31.9 a3.5,2.4 0 1,0 7.0,0 a3.5,2.4 0 1,0 -7.0,0 Z"/>
+          </g>
+          <path fill="#F6F1E6" d="M55.6,26.2 a1.0,1.0 0 1,0 0.01,0 Z"/>
+        </g>
+        <g transform="rotate(-16,43,61)">
+          <path fill="var(--doc-face)" d="M33,44 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M47,44 l9,9 h-9 Z"/>
+          <path fill="#1565C0" d="M35,52 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M35,65 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M35,71 h12 v3 h-12 Z"/>
+        </g>
+        <g transform="rotate(14,65,61)">
+          <path fill="var(--doc-face)" d="M55,44 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M69,44 l9,9 h-9 Z"/>
+          <path fill="#2E7D32" d="M57,52 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M57,65 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M57,71 h12 v3 h-12 Z"/>
+        </g>
+        <g transform="rotate(-2,54,54)">
+          <path fill="var(--doc-face)" d="M44,37 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M58,37 l9,9 h-9 Z"/>
+          <path fill="#D32F2F" d="M46,45 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M46,58 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M46,64 h12 v3 h-12 Z"/>
+        </g>
+      </svg>
+      <span class="wordmark">Gander</span>
+    </div>
+
+    <p class="eyebrow">Android <span class="dot">&middot;</span> Open source</p>
+    <h1>Take a gander at any file.</h1>
+    <p class="dateline">A file viewer that cannot phone home</p>
+
+  </header>
+
+  <p class="claim">Gander will not send your documents anywhere. Not as a promise
+  it makes, but as a <strong>capability it does not have</strong>.</p>
+
+  <p class="lede">Every phone ships with a dozen half-viewers that bounce your
+  documents through a cloud service to render them. Gander is the opposite: one
+  small app that opens PDFs, Word documents, spreadsheets, slides, photos, video,
+  audio, Markdown and code entirely on the device. It holds no permissions at
+  all, including the one it would need to reach the network.</p>
+
+  <dl class="stats">
+    <div><dt>0</dt><dd>Permissions</dd></div>
+    <div><dt>0</dt><dd>Ads or trackers</dd></div>
+    <div><dt>8 MB</dt><dd>Download</dd></div>
+    <div><dt>100%</dt><dd>Offline</dd></div>
+  </dl>
+
+  <section>
+    <h2><span class="num">01</span> What it opens</h2>
+
+    <p>PDF &middot; Word (<code>.docx</code>) &middot; Excel (<code>.xlsx</code>,
+    <code>.xls</code>, <code>.csv</code>, <code>.ods</code>) &middot; PowerPoint
+    (<code>.pptx</code>) &middot; Photos (JPG, PNG, WebP, GIF, HEIC, SVG and more)
+    &middot; Video (MP4, MKV, WebM, MOV and more) &middot; Audio (MP3, FLAC, WAV,
+    OGG and more) &middot; Markdown &middot; Text, JSON and code files.</p>
+
+    <p>In your file manager, tap any file and choose <strong>Open with &gt;
+    Gander</strong>. Or open Gander and pick a file, or grant it a folder to
+    browse. It runs on Android 8.0 and up.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> How the zero-permission trick works</h2>
+
+    <p>Gander receives files through the Storage Access Framework and "Open with"
+    intents, so Android hands it exactly the documents you chose and nothing else.
+    That is why it needs no storage permission: it never goes looking.</p>
+
+    <p>Office formats render inside a locked-down WebView whose every request is
+    intercepted. The rendering libraries load from the app's own assets and the
+    document streams straight from the file you picked. No network stack is ever
+    touched, and the app does not declare the INTERNET permission, so there is
+    nothing to audit and nothing to take on trust.</p>
+
+    <p>The permission list is also checked at build time: the build fails if a
+    dependency quietly adds one. And the app's own About screen asks Android what
+    it requests and shows you the answer.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Get it</h2>
+
+    <ul class="kept">
+      <li>
+        <b>Google Play</b>
+        Coming shortly. This page will link it when the listing is live.
+      </li>
+      <li>
+        <b>Download the APK</b>
+        Grab the latest from
+        <a href="https://github.com/mokshablr/gander/releases">GitHub releases</a>.
+        One file works on every architecture, because the app ships no native
+        code. Copy it to your phone and tap it.
+      </li>
+      <li>
+        <b>Automatic updates without a store</b>
+        Install <a href="https://github.com/ImranR98/Obtainium">Obtainium</a> and
+        add <code>https://github.com/mokshablr/gander</code> as a source. It
+        follows the tagged releases and updates Gander like a store would.
+      </li>
+      <li>
+        <b>F-Droid</b>
+        Requested and in progress.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Verify what you installed</h2>
+
+    <p>Every release is signed with the same key, so you can confirm an APK really
+    came from this project rather than from someone who repackaged it. Obtainium
+    can pin the fingerprint below, and for a file you have already downloaded:</p>
+
+    <p><code>apksigner verify --print-certs Gander-x.y.apk</code></p>
+
+    <p class="fingerprint">SHA-256<br>
+    5B:5C:F6:4A:94:23:7C:D5:F0:E0:85:76:00:38:BC:1C:EB:DF:18:DA:BA:5C:B3:EA:CA:7C:15:9F:22:A7:E2:4B</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Honest about what it is not</h2>
+
+    <ul class="plain">
+      <li>It is a viewer, not an editor. It will not change your files.</li>
+      <li>Text inside PDFs is not searchable yet.</li>
+      <li>No legacy <code>.doc</code> or <code>.ppt</code>, only the modern formats.</li>
+      <li>Complicated PowerPoint decks render approximately, and charts inside
+      spreadsheets are not drawn.</li>
+      <li>PDFs need Android System WebView 125 or newer. Gander says so plainly
+      rather than showing you a blank page.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Who made it</h2>
+
+    <p>Gander is made by <a href="https://arjun.maniyani.com/">Arjun Maniyani</a>.
+    It started as a small annoyance, which was that opening a PDF attachment on
+    Android usually means handing it to something that wants an account first.</p>
+
+    <p>It is MIT licensed and the whole thing is readable at
+    <a href="https://github.com/mokshablr/gander">github.com/mokshablr/gander</a>
+    &mdash; issues and small pull requests are welcome. The zero-permission,
+    zero-network property is the one thing that is not up for negotiation.</p>
+  </section>
+
+  <footer>
+    <span class="mit">MIT licensed</span>
+    <span>Made by <a href="https://arjun.maniyani.com/">Arjun Maniyani</a></span>
+    <span><a href="privacy.html">Privacy policy</a></span>
+    <span><a href="https://github.com/mokshablr/gander">Source on GitHub</a></span>
+  </footer>
+
+</div>
+
+<!-- TEMPORARY, with the switcher. No storage of any kind: the choice lasts
+     until the page is reloaded. A privacy policy that says nothing is kept has
+     no business keeping a theme preference to say it with. -->
+<script>
+(function () {
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll(".theme-switch button");
+
+  function apply(choice) {
+    if (choice === "light" || choice === "dark") root.setAttribute("data-theme", choice);
+    else { root.removeAttribute("data-theme"); choice = "system"; }
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute("aria-pressed", buttons[i].dataset.set === choice);
+    }
+  }
+
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener("click", function () { apply(this.dataset.set); });
+  }
+
+  apply("system");
+})();
+</script>
+
+</body>
+</html>

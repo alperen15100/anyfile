@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy - Gander</title>
+<meta name="description" content="Gander collects nothing. It has no internet permission, no ads, no trackers and no analytics. This page says exactly what it keeps on your phone.">
+<meta name="theme-color" content="#fcf6eb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f141a" media="(prefers-color-scheme: dark)">
+<meta name="author" content="Arjun Maniyani">
+<link rel="canonical" href="https://arjun.maniyani.com/gander/privacy.html">
+<!--
+  Served at https://arjun.maniyani.com/gander/privacy.html and linked from the
+  Play listing. Deliberately self-contained: no webfonts, no analytics, no
+  external request of any kind. A privacy policy for an app with no INTERNET
+  permission has no business phoning a font CDN and leaking the reader's IP,
+  so the type is a system stack and the logo is inline SVG converted from
+  app/src/main/res/drawable/ic_launcher_foreground.xml.
+
+  The JSON-LD below is inert data, not a fetch, so it keeps that property. It
+  is here so the authorship is machine-readable: without it a crawler sees a
+  policy signed by a name it cannot connect to anything.
+-->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "PrivacyPolicy",
+  "name": "Gander privacy policy",
+  "url": "https://arjun.maniyani.com/gander/privacy.html",
+  "about": {
+    "@type": "SoftwareApplication",
+    "name": "Gander",
+    "operatingSystem": "Android 8.0+",
+    "applicationCategory": "UtilitiesApplication",
+    "author": {
+      "@type": "Person",
+      "name": "Arjun Maniyani",
+      "url": "https://arjun.maniyani.com/",
+      "sameAs": ["https://github.com/mokshablr"]
+    }
+  }
+}
+</script>
+<style>
+  /* Matches docs/index.html exactly; the two pages must stay one site. See
+     that file for why the light ground is shaped the way it is. */
+  :root {
+    --desk-top:  #f5e9da;
+    --desk-bot:  #d2c9bd;
+    --sheet:     transparent;
+    --sheet-shadow: none;
+    /* Light only. Switched off for the two dark selectors further down, so the
+       frozen dark palette keeps its plain top-to-bottom wash. */
+    --glow: radial-gradient(300% 60% at 50% -8%,
+              rgba(252, 246, 236, 1) 0%,
+              rgba(252, 246, 236, 0.92) 20%,
+              rgba(252, 246, 236, 0.55) 40%,
+              rgba(252, 246, 236, 0.18) 64%,
+              rgba(252, 246, 236, 0) 88%);
+    /* Translucent, not a tint: the block lifts by a fixed amount above whatever
+       the ground is doing behind it, the grain carries straight through, and it
+       can never harden into the floating white sheet that got rejected. */
+    --card:      rgba(252, 246, 236, 0.34);
+    --ink:       #1a222c;
+    --ink-soft:  #4d5865;
+    --ink-faint: #686258;
+    --red:       #af2d18;
+    --blue:      #14539f;
+    --green:     #2b6b2f;
+    --rule:      rgba(26, 34, 44, 0.19);
+    --rule-firm: rgba(26, 34, 44, 0.44);
+    --grain:     0.055;
+    --grain-blend: multiply;
+    --logo-shadow: 0 1px 2px rgba(44, 36, 25, 0.24), 0 6px 18px rgba(44, 36, 25, 0.16);
+    --doc-face:      #fcf7ee;
+    --switch-bg:     #f5ecdf;
+    --switch-on-bg:  #1a222c;
+    --switch-on-fg:  #f2eade;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --geo:   Futura, "Century Gothic", "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+    --mono:  ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* The dark values appear twice on purpose: once for the OS preference and
+     once for an explicit choice from the switcher, because a media query and an
+     attribute selector cannot be combined in plain CSS. Keep the two in step. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --desk-top:  #161d26;
+      --desk-bot:  #0e131a;
+      --sheet:     transparent;
+      --sheet-shadow: none;
+      --card:      #1a222c;
+      --ink:       #e7e1d5;
+      --ink-soft:  #9ba6b2;
+      --ink-faint: #6d7883;
+      --red:       #e2795f;
+      --blue:      #90caf9;
+      --green:     #7fb883;
+      --rule:      rgba(231, 225, 213, 0.16);
+      --rule-firm: rgba(231, 225, 213, 0.30);
+      --grain:     0.05;
+      --grain-blend: screen;
+      --logo-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 3px 12px rgba(0,0,0,0.35);
+      --doc-face:      #ffffff;
+      --switch-bg:     #1a222c;
+      --switch-on-bg:  #e7e1d5;
+      --switch-on-fg:  #0e131a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --desk-top:  #161d26;
+    --desk-bot:  #0e131a;
+    --sheet:     transparent;
+    --sheet-shadow: none;
+    --card:      #1a222c;
+    --ink:       #e7e1d5;
+    --ink-soft:  #9ba6b2;
+    --ink-faint: #6d7883;
+    --red:       #e2795f;
+    --blue:      #90caf9;
+    --green:     #7fb883;
+    --rule:      rgba(231, 225, 213, 0.16);
+    --rule-firm: rgba(231, 225, 213, 0.30);
+    --grain:     0.05;
+    --grain-blend: screen;
+    --logo-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 3px 12px rgba(0,0,0,0.35);
+    --doc-face:      #ffffff;
+    --switch-bg:     #1a222c;
+    --switch-on-bg:  #e7e1d5;
+    --switch-on-fg:  #0e131a;
+  }
+
+  /* The glow is the one thing the two themes do not share, and it is deliberately
+     kept out of the blocks above so those stay exactly as they were. Dark is a
+     plain vertical wash and has to remain one. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --glow: none; }
+  }
+  :root[data-theme="dark"] { --glow: none; }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    /* Belt and braces for viewports narrower than anything testable here.
+       clip, not hidden: it makes no scroll container, so the fixed grain
+       overlay keeps working. */
+    overflow-x: clip;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 5vw, 2rem) 5rem;
+    /* Two layers, both pinned to the viewport: a wide soft source sitting just
+       off the top edge, over the ramp it falls into. The source is far wider
+       than it is tall on purpose, so the sheet and the margins sit at almost
+       the same brightness at any given height and the ellipse never resolves
+       into a shape you can point at. */
+    background-image: var(--glow),
+                      linear-gradient(to bottom, var(--desk-top), var(--desk-bot));
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: clamp(16.5px, 0.55rem + 0.55vw, 18.5px);
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Paper grain. An inline feTurbulence, so still zero requests. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--grain);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---- the framed document ---- */
+
+  .sheet {
+    position: relative;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 5vw, 4rem) clamp(2.5rem, 6vw, 4rem);
+    background: var(--sheet);
+    box-shadow: var(--sheet-shadow);
+    z-index: 2;
+  }
+
+  /* Two nested hairlines, the social preview's frame. Suppressed on narrow
+     screens, where they would crush the measure. */
+  .sheet::before,
+  .sheet::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  .sheet::before { inset: 0;     border: 1px solid var(--rule); }
+  .sheet::after  { inset: 6px;   border: 1px solid var(--rule-firm); }
+
+  @media (max-width: 40rem) {
+    .sheet::before, .sheet::after { display: none; }
+    .sheet { padding-left: 0; padding-right: 0; }
+  }
+
+  @media (min-width: 40.001rem) {
+    .masthead::before { inset: -1.5rem -1rem 0; }
+  }
+
+  /* ---- masthead ---- */
+
+  .masthead {
+    position: relative;
+    margin-bottom: clamp(2rem, 5vw, 3.25rem);
+    padding-bottom: clamp(1.5rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--rule-firm);
+  }
+
+  /* Ruled-paper motif, 36px pitch as in the social preview, fading out. */
+  .masthead::before {
+    content: "";
+    position: absolute;
+    /* Bleeds past the text column on wide screens for a printed-sheet feel.
+       Kept inside the box below 40rem: at a 320px viewport the body padding
+       resolves to exactly 1rem, so a 1rem bleed lands on the viewport edge
+       with nothing to spare. Measured as not overflowing at 500px and up,
+       which is as narrow as headless Chrome will lay out. */
+    inset: -1.5rem 0 0;
+    z-index: -1;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 35px,
+      var(--rule) 35px 36px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 82%);
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 82%);
+  }
+
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .lockup svg {
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 9px;
+    box-shadow: var(--logo-shadow);
+  }
+
+  .wordmark {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 1.42rem;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .eyebrow {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.66rem;
+    letter-spacing: 0.265em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.7rem;
+  }
+
+  .eyebrow .dot { color: var(--red); }
+
+  h1 {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 1.2rem + 3.6vw, 3.3rem);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    margin: 0 0 0.85rem;
+    text-wrap: balance;
+  }
+
+  .dateline {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  /* ---- the claim ---- */
+
+  .claim {
+    margin: 0 0 1.5rem;
+    font-size: clamp(1.34rem, 0.9rem + 1.7vw, 1.78rem);
+    line-height: 1.28;
+    font-style: italic;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  .claim strong { font-style: normal; font-weight: 600; }
+
+  .lede { font-size: 1.06em; }
+
+  /* ---- verify strip ---- */
+
+  .verify {
+    margin: 2rem 0 2.5rem;
+    padding: 1.35rem 1.5rem 1.4rem;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 2px solid var(--red);
+  }
+
+  .verify-label {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.9rem;
+  }
+
+  .verify ul { margin: 0; padding: 0; list-style: none; }
+
+  .verify li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.95em;
+    line-height: 1.55;
+  }
+
+  .verify li:last-child { margin-bottom: 0; }
+
+  .verify li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.58em;
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid var(--red);
+    border-radius: 2px;
+  }
+
+  /* ---- sections ---- */
+
+  section { margin-top: clamp(2.5rem, 6vw, 3.75rem); }
+
+  h2 {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 1.16rem;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule-firm);
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+
+  /* Sized and weighted to read as part of the heading rather than a speck
+     beside it. It was already on the heading's baseline; at a third the height
+     and regular weight it just looked dropped. */
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    flex: none;
+  }
+
+  p { margin: 0 0 1.1rem; }
+  section > p:last-child, li > p:last-child { margin-bottom: 0; }
+
+  ul.kept { margin: 0 0 1.1rem; padding: 0; list-style: none; }
+
+  ul.kept li {
+    padding: 0.9rem 0 0.95rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  ul.kept li:first-child { border-top: 1px solid var(--rule); }
+
+  ul.kept b {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.88em;
+    letter-spacing: 0.005em;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  ul.plain { margin: 0 0 1.1rem; padding-left: 1.15rem; }
+  ul.plain li { margin-bottom: 0.5rem; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.83em;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+  }
+
+  a {
+    color: var(--ink);
+    text-decoration-color: var(--red);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    transition: color 0.15s ease;
+  }
+  a:hover { color: var(--red); }
+  a:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  strong { font-weight: 600; }
+
+  /* ---- colophon ---- */
+
+  footer {
+    margin-top: clamp(3rem, 7vw, 4.5rem);
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--rule-firm);
+    font-size: 0.85em;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    align-items: baseline;
+  }
+
+  footer .mit {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* ---- theme switcher ----
+     TEMPORARY, for comparing the two palettes during review. To remove it:
+     delete this block, the .theme-switch markup, the script at the end of
+     the body, and both :root[data-theme="dark"] rules (the token block and
+     the --glow: none line), then the media query alone drives the theme
+     again exactly as before. */
+
+  .theme-switch {
+    position: fixed;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 10;
+    display: flex;
+    gap: 1px;
+    padding: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule-firm);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+
+  .theme-switch button {
+    font-family: var(--geo);
+    font-weight: 700;
+    font-size: 0.56rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.42rem 0.6rem;
+    border: 0;
+    cursor: pointer;
+    background: var(--switch-bg);
+    color: var(--ink-soft);
+  }
+
+  .theme-switch button:hover { color: var(--ink); }
+
+  /* Tokens rather than root-scoped overrides: a :root[data-theme] prefix
+     outranks [aria-pressed] and was repainting the pressed button's background
+     back to the unpressed tone, leaving near-black text on it in dark. */
+  .theme-switch button[aria-pressed="true"] {
+    background: var(--switch-on-bg);
+    color: var(--switch-on-fg);
+  }
+
+  .theme-switch button:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: -2px;
+  }
+
+  /* ---- motion ----
+     Deliberately only the logo and the accent rule. Text is never animated in
+     from opacity 0: this page has to stay legible to a Play reviewer, a crawler
+     and an archiver, and anything that starts invisible is one failed animation
+     away from a blank privacy policy. Decoration can move; the policy cannot. */
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lockup svg {
+      animation: settle 0.7s cubic-bezier(0.22, 0.68, 0.3, 1) backwards;
+    }
+    .wordmark {
+      animation: slide 0.7s cubic-bezier(0.22, 0.68, 0.3, 1) 0.08s backwards;
+    }
+    .verify {
+      animation: sweep 0.85s cubic-bezier(0.4, 0, 0.2, 1) 0.25s backwards;
+    }
+  }
+
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(-6px) rotate(-7deg); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes slide {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Grows the red rule down the verify block rather than fading the text in. */
+  @keyframes sweep {
+    from { border-left-color: transparent; }
+    to   { border-left-color: var(--red); }
+  }
+
+  /* ---- print: it is a policy, people print these ---- */
+
+  @media print {
+    body {
+      background: #fff;
+      color: #000;
+      font-size: 11pt;
+      padding: 0;
+    }
+    body::before, .masthead::before { display: none; }
+    .sheet::before, .sheet::after { display: none; }
+    .sheet { max-width: none; padding: 0; background: none; box-shadow: none; }
+    .theme-switch { display: none; }
+    :root { --doc-face: #ffffff; }
+    .verify { border: 1px solid #999; border-left-width: 2px; background: none; }
+    a { color: #000; text-decoration: none; }
+    a[href^="http"]::after {
+      content: " (" attr(href) ")";
+      font-family: monospace;
+      font-size: 8.5pt;
+      word-break: break-all;
+    }
+    section, footer { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TEMPORARY review control, see .theme-switch in the stylesheet for removal -->
+<div class="theme-switch" role="group" aria-label="Colour theme">
+  <button type="button" data-set="light">Light</button>
+  <button type="button" data-set="dark">Dark</button>
+  <button type="button" data-set="system">System</button>
+</div>
+
+<div class="sheet">
+
+  <header class="masthead">
+
+    <div class="lockup">
+      <svg viewBox="18 18 72 72" role="img" aria-label="Gander app icon">
+        <rect x="18" y="18" width="72" height="72" rx="16" fill="#F6F1E6"/>
+        <g transform="translate(-3.5,-1)">
+          <path fill="#262A2E" d="M64.5,50 L64.5,34 C64.5,29.6 63.9,26.6 62.4,25.1 C61.2,23.9 59.6,23.25 57.9,23.3 C55.1,23.4 52.9,25.3 52.3,28.0 L46.6,29.8 C45.9,30.05 45.9,30.75 46.6,30.95 L52.4,32.3 C53.1,34.1 54.7,35.3 56.6,35.6 C57.7,35.8 58.2,36.7 58.2,38.4 L58.2,50 Z"/>
+          <g transform="rotate(-22,56.4,31.9)">
+            <path fill="#FDFBF5" d="M52.9,31.9 a3.5,2.4 0 1,0 7.0,0 a3.5,2.4 0 1,0 -7.0,0 Z"/>
+          </g>
+          <path fill="#F6F1E6" d="M55.6,26.2 a1.0,1.0 0 1,0 0.01,0 Z"/>
+        </g>
+        <g transform="rotate(-16,43,61)">
+          <path fill="var(--doc-face)" d="M33,44 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M47,44 l9,9 h-9 Z"/>
+          <path fill="#1565C0" d="M35,52 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M35,65 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M35,71 h12 v3 h-12 Z"/>
+        </g>
+        <g transform="rotate(14,65,61)">
+          <path fill="var(--doc-face)" d="M55,44 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M69,44 l9,9 h-9 Z"/>
+          <path fill="#2E7D32" d="M57,52 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M57,65 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M57,71 h12 v3 h-12 Z"/>
+        </g>
+        <g transform="rotate(-2,54,54)">
+          <path fill="var(--doc-face)" d="M44,37 h14 l9,9 v22 q0,3 -3,3 h-20 q-3,0 -3,-3 v-28 q0,-3 3,-3 Z"/>
+          <path fill="#C9CFD6" d="M58,37 l9,9 h-9 Z"/>
+          <path fill="#D32F2F" d="M46,45 h9 v9 h-9 Z"/>
+          <path fill="#D9DEE5" d="M46,58 h16 v3 h-16 Z"/>
+          <path fill="#D9DEE5" d="M46,64 h12 v3 h-12 Z"/>
+        </g>
+      </svg>
+      <span class="wordmark">Gander</span>
+    </div>
+
+    <p class="eyebrow">Privacy <span class="dot">&middot;</span> Policy</p>
+    <h1>What Gander knows about you</h1>
+    <p class="dateline">Last updated 9 August 2026</p>
+
+  </header>
+
+  <p class="claim"><strong>Nothing.</strong> That is the whole answer, and the rest
+  of this page is just showing my working.</p>
+
+  <p class="lede">Gander is an Android file viewer. It opens documents, photos, video
+  and audio on your phone and shows them to you. That is the whole app.</p>
+
+  <p>There is no analytics, no advertising, no tracking, no crash reporting and no
+  account. Gander does not hold the <code>INTERNET</code> permission, so it cannot
+  send anything anywhere even if it tried.</p>
+
+  <div class="verify">
+    <p class="verify-label">You do not have to take my word for it</p>
+    <ul>
+      <li>The app requests <strong>no permissions at all</strong>. Your phone will
+      confirm this: Settings &gt; Apps &gt; Gander &gt; Permissions.</li>
+      <li>Without the <code>INTERNET</code> permission there is no mechanism by which
+      a file could leave your device. Not a promise, a missing capability.</li>
+      <li>The source is public and MIT licensed at
+      <a href="https://github.com/mokshablr/gander">github.com/mokshablr/gander</a>,
+      so anyone can check both claims against the code.</li>
+    </ul>
+  </div>
+
+  <section>
+    <h2><span class="num">01</span> What Gander keeps on your phone</h2>
+
+    <p>All of it lives in the app's own private storage on the device:</p>
+
+    <ul class="kept">
+      <li>
+        <b>Recent files</b>
+        For each file you open through the picker: its name, the system reference to
+        it, and when you opened it. Up to 25 entries. Long-press one to remove it.
+      </li>
+      <li>
+        <b>Folder access</b>
+        When you add a folder, Android remembers that you granted Gander read access
+        to it. Gander can see nothing outside the folders and files you hand it.
+        Long-press a folder to take the access back.
+      </li>
+      <li>
+        <b>Thumbnails</b>
+        Small previews, about 192 pixels, made from a photo, the first frame of a
+        video, or the first page of a PDF. These sit in the app's cache.
+      </li>
+    </ul>
+
+    <p>Two smaller things go in the cache as well: text you share into Gander from
+    another app is written to a temporary file so the viewer can read it, and one of
+    the bundled rendering libraries sets a housekeeping flag. Neither holds a copy of
+    your documents.</p>
+
+    <p>None of this is transmitted anywhere. I never see it.</p>
+
+    <p>Gander also opts out of Android's app backup, so none of the above is copied
+    into your device backup either. It would have been useless if it were: the folder
+    permissions the recents list points at do not survive being restored onto another
+    phone.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> The files you open</h2>
+
+    <p>Gander reads a file only when you point it at one, through the system picker,
+    a folder you granted, or "Open with" from another app. PDFs, Word, Excel and
+    PowerPoint files are rendered on the device by open source libraries bundled
+    inside the app. Nothing is uploaded, converted in the cloud, or seen by anyone
+    but you.</p>
+
+    <p>The Share button hands the open file to whichever app you choose. That is your
+    action sending your file where you asked it to go. Gander's part ends at opening
+    the share sheet.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Deleting it</h2>
+
+    <p>There is no server, so there is nothing to ask me to delete. It is all yours
+    to remove:</p>
+
+    <ul class="plain">
+      <li><strong>Thumbnails and temporary files:</strong> Settings &gt; Apps &gt;
+      Gander &gt; Storage &gt; Clear cache.</li>
+      <li><strong>Everything, including recents and folder access:</strong>
+      Settings &gt; Apps &gt; Gander &gt; Storage &gt; Clear storage.</li>
+      <li><strong>Uninstalling</strong> removes the lot.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Children</h2>
+
+    <p>Gander is a general-purpose utility. It is not directed at children, and since
+    it collects no data from anyone, it collects none from children either.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Changes</h2>
+
+    <p>If any of this changes, I will update this page and the date at the top, and
+    say what changed in the release notes.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Contact</h2>
+
+    <p>Gander is made by <a href="https://arjun.maniyani.com/">Arjun Maniyani</a>.
+    Questions about privacy, or anything else, go here:
+    <a href="https://github.com/mokshablr/gander/issues">github.com/mokshablr/gander/issues</a>.</p>
+  </section>
+
+  <footer>
+    <span class="mit">MIT licensed</span>
+    <!-- index.html, not "./": a bare directory link only resolves to the page
+         when a server applies its DirectoryIndex, and shows a file listing when
+         the page is opened straight off disk. -->
+    <span><a href="index.html">About Gander</a></span>
+    <span><a href="https://github.com/mokshablr/gander">Source on GitHub</a></span>
+  </footer>
+
+</div>
+
+<!-- TEMPORARY, with the switcher. No storage of any kind: the choice lasts
+     until the page is reloaded. A privacy policy that says nothing is kept has
+     no business keeping a theme preference to say it with. -->
+<script>
+(function () {
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll(".theme-switch button");
+
+  function apply(choice) {
+    if (choice === "light" || choice === "dark") root.setAttribute("data-theme", choice);
+    else { root.removeAttribute("data-theme"); choice = "system"; }
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute("aria-pressed", buttons[i].dataset.set === choice);
+    }
+  }
+
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener("click", function () { apply(this.dataset.set); });
+  }
+
+  apply("system");
+})();
+</script>
+
+</body>
+</html>

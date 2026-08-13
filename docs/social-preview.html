@@ -130,6 +130,17 @@
     letter-spacing: -0.005em; line-height: 1;
   }
 
+  /* Balances the repo line at the other end of the same baseline. This card is
+     what renders on every share of the repo, and it was the one surface naming
+     the project without naming anyone. Kept in slate so the claims above it
+     still carry the weight. */
+  .byline {
+    position: absolute; left: 86px; top: 577px;
+    font-family: var(--mono); font-weight: 500; font-size: 18.2px;
+    letter-spacing: -0.005em; line-height: 1;
+    color: var(--slate);
+  }
+
   /* ---------- fanned document cards ---------- */
 
   .cards { position: absolute; inset: 0; }
@@ -236,6 +247,7 @@
     <div class="small">NO INTERNET &middot; NOTHING LEAVES YOUR PHONE</div>
   </div>
 
+  <div class="byline">by Arjun Maniyani</div>
   <div class="repo">github.com/mokshablr/gander</div>
 </div>
 </body>

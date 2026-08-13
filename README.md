@@ -128,8 +128,8 @@ build requirements only. The installed app runs on Android 8.0 (API 26) and up.
 ./gradlew assembleRelease      # unsigned without a keystore
 ```
 
-Release signing expects a local, untracked keystore at `keystore/gander.jks`
-(store and key password `gander-local`, alias `gander`); generate one with:
+Release signing expects a local, untracked keystore at `keystore/gander.jks`,
+alias `gander`. Generate your own with:
 
 ```sh
 keytool -genkeypair -keystore keystore/gander.jks -alias gander \
@@ -137,8 +137,19 @@ keytool -genkeypair -keystore keystore/gander.jks -alias gander \
   -storepass gander-local -keypass gander-local -dname "CN=Gander"
 ```
 
+That builds and signs with no further setup, because `gander-local` is the
+fallback password in `app/build.gradle.kts`. To use a different one, set it in
+`~/.gradle/gradle.properties` rather than in the build file:
+
+```properties
+GANDER_STORE_PASSWORD=…
+GANDER_KEY_PASSWORD=…
+```
+
 The keystore is gitignored on purpose: it is a personal signing key and must
-never land in a public repo.
+never land in a public repo. Neither should its password, which is why the real
+one lives outside the tree. Builds signed with your own key will not update an
+install of a release from here; the official signing certificate is above.
 
 ## Architecture in one paragraph
 

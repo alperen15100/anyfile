@@ -19,14 +19,22 @@ android {
 
     // The release keystore is intentionally not in the repo. Contributors without
     // it get an unsigned release build; debug builds always work.
+    //
+    // The password is read from GANDER_STORE_PASSWORD / GANDER_KEY_PASSWORD, which
+    // belong in ~/.gradle/gradle.properties rather than here, because this file is
+    // public and a password committed to it is a password published. The fallback
+    // is the throwaway one the README tells contributors to generate their own key
+    // with, so cloning and building keeps working with no configuration at all.
     val releaseKeystore = rootProject.file("keystore/gander.jks")
     if (releaseKeystore.exists()) {
+        val storePass = (findProperty("GANDER_STORE_PASSWORD") as String?) ?: "gander-local"
+        val keyPass = (findProperty("GANDER_KEY_PASSWORD") as String?) ?: storePass
         signingConfigs {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = "gander-local"
+                storePassword = storePass
                 keyAlias = "gander"
-                keyPassword = "gander-local"
+                keyPassword = keyPass
             }
         }
     }

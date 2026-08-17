@@ -44,6 +44,14 @@
     <!-- Becomes the viewer's title, so it reads as the document it is -->
     <string name="licences_file_name" translatable="false">Open source licences.md</string>
     <string name="licences_failed">The licences file can\'t be opened</string>
+    <!-- Shown where the document was, after Android takes the renderer process
+         away. Two titles because the two causes are not the same thing: the
+         common one is the system reclaiming memory, which is nobody's fault and
+         says nothing about the file, and the rare one is the renderer failing. -->
+    <string name="render_gone_reclaimed">Android closed this document to free up memory</string>
+    <string name="render_gone_crashed">The document viewer stopped unexpectedly</string>
+    <string name="render_gone_detail">The file itself is untouched. Reloading it usually works.</string>
+    <string name="render_gone_reload">Reload</string>
     <string name="url_author" translatable="false">https://arjun.maniyani.com/</string>
     <string name="url_source" translatable="false">https://github.com/mokshablr/gander</string>
 </resources>

@@ -441,6 +441,35 @@ class ViewerActivity : AppCompatActivity() {
         val mime = documentMime(ext)
 
         web.webViewClient = object : WebViewClientCompat() {
+            /**
+             * The renderer is a process of its own, and Android is free to kill it
+             * when memory runs short. That happens most easily while Gander is in
+             * the background and something heavy is starting in front of it, which
+             * is exactly what tapping Share and picking a large app looks like.
+             *
+             * Not overriding this is not the neutral choice. The default returns
+             * false, and false tells WebView to kill the whole application rather
+             * than leave it holding a WebView it can no longer draw. So a document
+             * left open in the background could take Gander down with it, with no
+             * crash of ours behind it and nothing on screen to explain it.
+             *
+             * Returning true keeps the process, and the price is that this WebView
+             * is finished: nothing may call into it again, so it is detached and
+             * destroyed here and the reader is offered the document back.
+             */
+            override fun onRenderProcessGone(
+                view: WebView,
+                detail: android.webkit.RenderProcessGoneDetail
+            ): Boolean {
+                if (webView === view) {
+                    webView = null
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    view.destroy()
+                    showRendererGone(container, detail.didCrash())
+                }
+                return true
+            }
+
             override fun shouldInterceptRequest(
                 view: WebView,
                 request: WebResourceRequest
@@ -471,6 +500,27 @@ class ViewerActivity : AppCompatActivity() {
                 "?name=${Uri.encode(name)}&ext=${Uri.encode(ext)}&ranged=$ranged" +
                 pdfjsFloorParams(kind, web.settings.userAgentString)
         )
+    }
+
+    /**
+     * Puts a message and a way back where the document was, once its renderer has
+     * gone. Reloading is a full restart of the activity rather than a fresh WebView
+     * in place, because search holds the WebView it was wired to and a destroyed one
+     * cannot answer findAllAsync; going through onCreate again rebuilds both together.
+     */
+    private fun showRendererGone(container: FrameLayout, didCrash: Boolean) {
+        // Both search surfaces go until there is something to search again
+        findViewById<LinearLayout>(R.id.searchBar).visibility = View.GONE
+        findViewById<MaterialToolbar>(R.id.toolbar).menu
+            .findItem(R.id.action_search)?.isVisible = false
+
+        container.removeAllViews()
+        val card = layoutInflater.inflate(R.layout.view_render_gone, container, false)
+        card.findViewById<TextView>(R.id.renderGoneTitle).setText(
+            if (didCrash) R.string.render_gone_crashed else R.string.render_gone_reclaimed
+        )
+        card.findViewById<View>(R.id.renderGoneReload).setOnClickListener { recreate() }
+        container.addView(card)
     }
 
     /**

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- A document left open no longer takes the whole app down with it when Android runs
+  short of memory. Everything drawn by the sandboxed viewer, PDFs included, is
+  rendered in a process of its own, and Android is free to end that process while
+  Gander is in the background. Sharing a file to a large app is exactly that
+  situation: the other app starts up in front, and the process holding the document
+  is left sitting there with nobody looking at it. Gander had never answered that
+  notification, and not answering it does not mean nothing happens, it means the
+  framework kills the application, so the app disappeared with no crash of its own
+  behind it and nothing on screen to account for it. It now stays open, says that
+  Android closed the document to free up memory, and offers to load it again
+  (thanks @rosyzc7 for the report that led here)
+
 ## 1.10 (2026-08-13)
 
 - There is an About screen now, in the menu on the home screen. Rather than repeat

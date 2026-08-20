@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gander</string>
+    <string name="app_name">ANYFILE</string>
     <string name="main_subtitle">Open and view documents, spreadsheets, slides and photos. Everything renders on your phone, nothing is uploaded.</string>
     <string name="open_a_file">Open a file</string>
     <string name="recent_files">Recent files</string>
     <string name="folders">Folders</string>
     <string name="add_folder">Add a folder</string>
     <string name="no_recents_hint">Files you open appear here for quick access.</string>
-    <string name="no_folders_hint">Grant a folder (for example Documents, DCIM, or any folder you create) to browse its files right here. Android does not allow granting the Downloads root, but its subfolders work. Gander itself needs no storage permission.</string>
+    <string name="no_folders_hint">Grant a folder (for example Documents, DCIM, or any folder you create) to browse its files right here. Android does not allow granting the Downloads root, but its subfolders work. ANYFILE itself needs no storage permission.</string>
     <string name="empty_folder">Nothing to show in this folder.</string>
     <string name="removed">Removed</string>
     <string name="search_in_document">Search in document</string>
@@ -23,15 +23,15 @@
     <string name="match_count_spoken">Match %1$d of %2$d</string>
     <string name="no_matches">No matches</string>
     <string name="supported_formats">PDF · Word (.docx) · Excel (.xlsx, .xls, .csv, .ods) · PowerPoint (.pptx) · Photos (JPG, PNG, WebP, GIF, HEIC, SVG and more) · Video (MP4, MKV, WebM, MOV and more) · Audio (MP3, FLAC, WAV, OGG and more) · Markdown · Text, JSON and code files</string>
-    <string name="open_with_hint">Tip: in your file manager, tap any file and choose Open with &gt; Gander.</string>
+    <string name="open_with_hint">Tip: in your file manager, tap any file and choose Open with &gt; ANYFILE.</string>
     <string name="back">Back</string>
-    <string name="about_gander">About Gander</string>
+    <string name="about_gander">About ANYFILE</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_permissions_label">Permissions this app requests</string>
     <string name="about_permissions_none">None</string>
-    <!-- Sits under the permission line, which Gander reads back from Android at
+    <!-- Sits under the permission line, which ANYFILE reads back from Android at
          runtime rather than asserting for itself -->
-    <string name="about_permissions_detail">Asked of Android just now, not written here in advance. Gander has no internet permission either, so it cannot send your files anywhere.</string>
+    <string name="about_permissions_detail">Asked of Android just now, not written here in advance. ANYFILE has no internet permission either, so it cannot send your files anywhere.</string>
     <string name="about_made_by">Made by Arjun Maniyani</string>
     <string name="about_made_by_url" translatable="false">arjun.maniyani.com</string>
     <string name="about_source">Source code</string>

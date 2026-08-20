@@ -1,4 +1,4 @@
-package com.arjun.gander
+package com.ecrinlabs.anyfile
 
 /**
  * What we know how to display, and which bundled HTML page renders it

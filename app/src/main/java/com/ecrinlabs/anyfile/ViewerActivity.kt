@@ -1,4 +1,4 @@
-package com.arjun.gander
+package com.ecrinlabs.anyfile
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -38,7 +38,7 @@ import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import androidx.webkit.WebViewCompat
-import com.arjun.gander.FileKind.Companion.detect
+import com.ecrinlabs.anyfile.FileKind.Companion.detect
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.google.android.material.appbar.MaterialToolbar

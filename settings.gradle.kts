@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Gander"
+rootProject.name = "ANYFILE"
 include(":app")

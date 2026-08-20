@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.arjun.gander"
+    namespace = "com.ecrinlabs.anyfile"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.arjun.gander"
+        applicationId = "com.ecrinlabs.anyfile"
         minSdk = 26
         targetSdk = 36
         versionCode = 12

@@ -24,6 +24,13 @@
     <string name="tool_search">SEARCH</string>
     <string name="tool_favorites">FAVORITES</string>
 
+    <string name="file_tools">FILE TOOLS</string>
+    <string name="create_zip">CREATE ZIP</string>
+    <string name="extract_zip">EXTRACT ZIP</string>
+    <string name="images_pdf">IMAGES → PDF</string>
+    <string name="detect_file">DETECT FILE</string>
+    <string name="extract_done">Files extracted</string>
+
     <string name="recent_files">RECENT FILES</string>
     <string name="folders">FOLDERS</string>
     <string name="add_folder">Add a folder</string>

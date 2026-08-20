@@ -15,6 +15,9 @@ import com.google.android.material.button.MaterialButton
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -63,8 +66,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var homeHero: View
 
-    private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO }
+    private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO, EXTRACT_ZIP }
     private var pendingTool: ToolAction? = null
+    private var pendingZipInputs: List<Uri> = emptyList()
+    private var pendingZipUri: Uri? = null
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -107,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                     ToolAction.IMAGE_TO_PDF -> imageToPdf(input, outUri)
                     ToolAction.TEXT_TO_PDF -> textToPdf(input, outUri)
                     ToolAction.FILE_INFO -> false
+                    ToolAction.EXTRACT_ZIP -> false
                 }
                 Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
             }
@@ -115,6 +121,61 @@ class MainActivity : AppCompatActivity() {
         }
 
     private var pendingInputUri: Uri? = null
+
+
+    private val pickZipInputs =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            if (uris.isNotEmpty()) {
+                pendingZipInputs = uris
+                createZipOutput.launch("ANYFILE-archive.zip")
+            }
+        }
+
+    private val createZipOutput =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { outUri ->
+            if (outUri != null && pendingZipInputs.isNotEmpty()) {
+                val ok = createZip(pendingZipInputs, outUri)
+                Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingZipInputs = emptyList()
+        }
+
+    private val pickZipToExtract =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                pendingZipUri = uri
+                pickExtractFolder.launch(null)
+            }
+        }
+
+    private val pickExtractFolder =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { treeUri ->
+            val zipUri = pendingZipUri
+            if (treeUri != null && zipUri != null) {
+                val ok = extractZip(zipUri, treeUri)
+                Toast.makeText(this, if (ok) R.string.extract_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingZipUri = null
+        }
+
+    private val pickImagesForPdf =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            if (uris.isNotEmpty()) {
+                pendingMultiImages = uris
+                createMultiPdfOutput.launch("ANYFILE-images.pdf")
+            }
+        }
+
+    private var pendingMultiImages: List<Uri> = emptyList()
+
+    private val createMultiPdfOutput =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { outUri ->
+            if (outUri != null && pendingMultiImages.isNotEmpty()) {
+                val ok = imagesToPdf(pendingMultiImages, outUri)
+                Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingMultiImages = emptyList()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -191,6 +252,19 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.toolInfo).setOnClickListener { launchTool(ToolAction.FILE_INFO, arrayOf("*/*")) }
         findViewById<View>(R.id.toolSearch).setOnClickListener { showSearchDialog() }
         findViewById<View>(R.id.toolFavorites).setOnClickListener { showFavorites() }
+        findViewById<View>(R.id.toolCreateZip).setOnClickListener {
+            pickZipInputs.launch(arrayOf("*/*"))
+        }
+        findViewById<View>(R.id.toolExtractZip).setOnClickListener {
+            pickZipToExtract.launch(arrayOf("application/zip", "application/x-zip-compressed"))
+        }
+        findViewById<View>(R.id.toolMultiPdf).setOnClickListener {
+            pickImagesForPdf.launch(arrayOf("image/*"))
+        }
+        findViewById<View>(R.id.toolDetect).setOnClickListener {
+            pendingTool = ToolAction.FILE_INFO
+            pickToolFile.launch(arrayOf("*/*"))
+        }
 
         onBackPressedDispatcher.addCallback(this, backCallback)
     }
@@ -442,6 +516,110 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+    private fun createZip(inputs: List<Uri>, output: Uri): Boolean = runCatching {
+        contentResolver.openOutputStream(output)?.use { raw ->
+            ZipOutputStream(raw).use { zip ->
+                val used = mutableSetOf<String>()
+                inputs.forEachIndexed { index, uri ->
+                    var name = displayName(uri).replace("/", "_")
+                    if (name.isBlank()) name = "file-${index + 1}"
+                    var unique = name
+                    var n = 2
+                    while (!used.add(unique)) {
+                        unique = "${name.substringBeforeLast('.', name)}-$n" +
+                            if (name.contains('.')) ".${name.substringAfterLast('.')}" else ""
+                        n++
+                    }
+                    zip.putNextEntry(ZipEntry(unique))
+                    contentResolver.openInputStream(uri)?.use { it.copyTo(zip) }
+                    zip.closeEntry()
+                }
+            }
+            true
+        } ?: false
+    }.getOrDefault(false)
+
+    private fun safeZipName(name: String): String? {
+        val clean = name.replace('\\', '/').trimStart('/')
+        if (clean.isBlank() || clean.contains("../") || clean == "..") return null
+        return clean
+    }
+
+    private fun extractZip(zipUri: Uri, treeUri: Uri): Boolean = runCatching {
+        val rootId = DocumentsContract.getTreeDocumentId(treeUri)
+        val dirs = mutableMapOf<String, String>("" to rootId)
+
+        fun ensureDir(path: String): String {
+            dirs[path]?.let { return it }
+            val parentPath = path.substringBeforeLast('/', "")
+            val name = path.substringAfterLast('/')
+            val parentId = ensureDir(parentPath)
+            val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentId)
+            val created = DocumentsContract.createDocument(
+                contentResolver, parentUri, DocumentsContract.Document.MIME_TYPE_DIR, name
+            ) ?: error("Could not create folder")
+            val id = DocumentsContract.getDocumentId(created)
+            dirs[path] = id
+            return id
+        }
+
+        contentResolver.openInputStream(zipUri)?.use { raw ->
+            ZipInputStream(raw).use { zin ->
+                while (true) {
+                    val entry = zin.nextEntry ?: break
+                    val safe = safeZipName(entry.name) ?: continue
+                    val normalized = safe.trimEnd('/')
+                    if (normalized.isBlank()) continue
+                    if (entry.isDirectory) {
+                        ensureDir(normalized)
+                    } else {
+                        val parentPath = normalized.substringBeforeLast('/', "")
+                        val fileName = normalized.substringAfterLast('/')
+                        val parentId = ensureDir(parentPath)
+                        val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentId)
+                        val mime = android.webkit.MimeTypeMap.getSingleton()
+                            .getMimeTypeFromExtension(fileName.substringAfterLast('.', "").lowercase())
+                            ?: "application/octet-stream"
+                        val created = DocumentsContract.createDocument(
+                            contentResolver, parentUri, mime, fileName
+                        ) ?: error("Could not create file")
+                        contentResolver.openOutputStream(created)?.use { out -> zin.copyTo(out) }
+                    }
+                    zin.closeEntry()
+                }
+            }
+        } ?: return@runCatching false
+        true
+    }.getOrDefault(false)
+
+    private fun imagesToPdf(inputs: List<Uri>, output: Uri): Boolean = runCatching {
+        val pdf = PdfDocument()
+        val pageWidth = 1240
+        val pageHeight = 1754
+        val margin = 56f
+        var pageNumber = 1
+        for (uri in inputs) {
+            val bitmap = decodeBitmap(uri) ?: continue
+            val page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber++).create())
+            val maxW = pageWidth - margin * 2
+            val maxH = pageHeight - margin * 2
+            val scale = minOf(maxW / bitmap.width, maxH / bitmap.height)
+            val w = bitmap.width * scale
+            val h = bitmap.height * scale
+            val left = (pageWidth - w) / 2f
+            val top = (pageHeight - h) / 2f
+            page.canvas.drawBitmap(bitmap, null, android.graphics.RectF(left, top, left + w, top + h), Paint(Paint.ANTI_ALIAS_FLAG))
+            pdf.finishPage(page)
+        }
+        val ok = contentResolver.openOutputStream(output)?.use {
+            pdf.writeTo(it)
+            true
+        } ?: false
+        pdf.close()
+        ok
+    }.getOrDefault(false)
+
     private fun launchTool(action: ToolAction, mimeTypes: Array<String>) {
         pendingTool = action
         pickToolFile.launch(mimeTypes)
@@ -452,6 +630,10 @@ class MainActivity : AppCompatActivity() {
             ToolAction.FILE_INFO -> {
                 showFileInfo(uri)
                 pendingTool = null
+            }
+            ToolAction.EXTRACT_ZIP -> {
+                pendingZipUri = uri
+                pickExtractFolder.launch(null)
             }
             ToolAction.IMAGE_TO_JPG -> {
                 pendingInputUri = uri

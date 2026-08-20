@@ -107,6 +107,26 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/file_tools"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorPrimary" />
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:columnCount="2"
+                    android:useDefaultMargins="true">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/toolCreateZip" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:text="@string/create_zip" app:cornerRadius="15dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/toolExtractZip" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:text="@string/extract_zip" app:cornerRadius="15dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/toolMultiPdf" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:text="@string/images_pdf" app:cornerRadius="15dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/toolDetect" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:text="@string/detect_file" app:cornerRadius="15dp"/>
+                </GridLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
                     android:text="@string/privacy_note"

@@ -30,6 +30,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -339,32 +340,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         // File type shortcuts
-        findViewById<View>(R.id.typePdf).setOnClickListener { openDocument.launch(arrayOf("application/pdf")) }
-        findViewById<View>(R.id.typeWord).setOnClickListener {
-            openDocument.launch(arrayOf(
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "application/msword"
-            ))
-        }
-        findViewById<View>(R.id.typeExcel).setOnClickListener {
-            openDocument.launch(arrayOf(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "application/vnd.ms-excel",
-                "text/csv"
-            ))
-        }
-        findViewById<View>(R.id.typeSlides).setOnClickListener {
-            openDocument.launch(arrayOf(
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                "application/vnd.ms-powerpoint"
-            ))
-        }
-        findViewById<View>(R.id.typeImages).setOnClickListener { openDocument.launch(arrayOf("image/*")) }
-        findViewById<View>(R.id.typeVideo).setOnClickListener { openDocument.launch(arrayOf("video/*")) }
-        findViewById<View>(R.id.typeAudio).setOnClickListener { openDocument.launch(arrayOf("audio/*")) }
-        findViewById<View>(R.id.typeCode).setOnClickListener {
-            openDocument.launch(arrayOf("text/*", "application/json", "application/xml"))
-        }
 
         // V3 quick tools — all free
         findViewById<View>(R.id.toolJpg).setOnClickListener { launchTool(ToolAction.IMAGE_TO_JPG, arrayOf("image/*")) }

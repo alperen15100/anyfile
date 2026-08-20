@@ -1,0 +1,56 @@
+name: Build Play Store APK + AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > anyfile-upload-key.jks
+
+      - name: Verify keystore
+        run: |
+          test -s anyfile-upload-key.jks
+          echo "Keystore restored successfully."
+
+      - name: Build signed APK and AAB
+        env:
+          GANDER_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          GANDER_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          mkdir -p keystore
+          cp anyfile-upload-key.jks keystore/gander.jks
+          ./gradlew assembleRelease bundleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANYFILE-APK
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANYFILE-PLAY-STORE-AAB
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error

@@ -10,7 +10,6 @@ import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
-import android.widget.LinearLayout
 import android.content.ContentValues
 import android.provider.MediaStore
 import android.os.Build
@@ -43,6 +42,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import java.io.File
 
@@ -69,6 +69,9 @@ class MainActivity : AppCompatActivity() {
     private val adapter = RowAdapter()
     private lateinit var toolbar: MaterialToolbar
     private lateinit var homeHero: View
+    private lateinit var homeScreen: View
+    private lateinit var toolsScreen: View
+    private lateinit var bottomNav: BottomNavigationView
 
     private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO, EXTRACT_ZIP, UNKNOWN_FILE }
     private var pendingTool: ToolAction? = null
@@ -301,6 +304,31 @@ class MainActivity : AppCompatActivity() {
             it.adapter = adapter
         }
         homeHero = findViewById(R.id.homeHero)
+        homeScreen = findViewById(R.id.homeScreen)
+        toolsScreen = findViewById(R.id.toolsScreen)
+        bottomNav = findViewById(R.id.bottomNav)
+
+        findViewById<View>(R.id.openToolsButton).setOnClickListener {
+            showToolsScreen()
+        }
+
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    showHomeScreen()
+                    true
+                }
+                R.id.nav_tools -> {
+                    showToolsScreen()
+                    true
+                }
+                R.id.nav_about -> {
+                    showAbout()
+                    false
+                }
+                else -> false
+            }
+        }
 
         findViewById<View>(R.id.openHeroButton).setOnClickListener {
             openDocument.launch(arrayOf("*/*"))
@@ -385,6 +413,20 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         render()
+    }
+
+    private fun showHomeScreen() {
+        homeScreen.visibility = View.VISIBLE
+        toolsScreen.visibility = View.GONE
+        bottomNav.menu.findItem(R.id.nav_home).isChecked = true
+        toolbar.title = getString(R.string.app_name)
+    }
+
+    private fun showToolsScreen() {
+        homeScreen.visibility = View.GONE
+        toolsScreen.visibility = View.VISIBLE
+        bottomNav.menu.findItem(R.id.nav_tools).isChecked = true
+        toolbar.title = getString(R.string.tools)
     }
 
     private fun openInViewer(uri: Uri) {
@@ -499,6 +541,10 @@ class MainActivity : AppCompatActivity() {
         backCallback.isEnabled = stack.isNotEmpty()
         val rows = if (stack.isEmpty()) homeRows() else folderRows(stack.last())
         homeHero.visibility = if (stack.isEmpty()) View.VISIBLE else View.GONE
+        if (stack.isNotEmpty()) {
+            homeScreen.visibility = View.VISIBLE
+            toolsScreen.visibility = View.GONE
+        }
         toolbar.title = if (stack.isEmpty()) getString(R.string.app_name) else stack.last().label
         toolbar.navigationIcon =
             if (stack.isEmpty()) null

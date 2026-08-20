@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ANYFILE</string>
+    <string name="by_ecrin_labs">by Ecrin Labs</string>
+    <string name="home">Home</string>
+    <string name="tools">Tools</string>
+    <string name="about_short">About</string>
+    <string name="tools_title">All tools</string>
+    <string name="tools_subtitle">PDF, image, archive and file utilities — all on your device.</string>
+    <string name="tools_footer">Offline by design. Your files stay on your device.</string>
+    <string name="home_tools_teaser">Need to convert, compress, merge, split or extract?</string>
+    <string name="image_tools">IMAGE TOOLS</string>
+    <string name="archive_tools">ARCHIVE TOOLS</string>
     <string name="main_subtitle">Open anything. Private. Offline.</string>
     <string name="open_a_file">Open a file</string>
     <string name="open_any_file">OPEN ANY FILE</string>
@@ -122,13 +132,13 @@
     <string name="about_permissions_label">Permissions this app requests</string>
     <string name="about_permissions_none">None</string>
     <string name="about_permissions_detail">Checked directly from Android. ANYFILE has no internet permission, so it cannot upload your files.</string>
-    <string name="about_made_by">ANYFILE</string>
+    <string name="about_made_by">Ecrin Labs</string>
     <string name="about_made_by_url" translatable="false">https://github.com/alperen15100/anyfile</string>
     <string name="about_source">Source code</string>
     <string name="about_source_url" translatable="false">github.com/alperen15100/anyfile</string>
     <string name="about_licences">Open source licences</string>
     <string name="about_licences_detail">Full text for every bundled library</string>
-    <string name="about_copyright" translatable="false">ANYFILE is based on MIT-licensed open-source software. Original Gander copyright © 2026 Arjun Maniyani.</string>
+    <string name="about_copyright" translatable="false">ANYFILE by Ecrin Labs. Built with MIT-licensed open-source software. Original Gander copyright © 2026 Arjun Maniyani.</string>
     <string name="about_close">Close</string>
     <string name="no_browser">No app can open links</string>
     <string name="licences_file_name" translatable="false">Open source licences.md</string>

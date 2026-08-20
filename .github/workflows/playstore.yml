@@ -21,25 +21,30 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Restore signing keystore
+      - name: Restore ANYFILE signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > anyfile-upload-key.jks
+          mkdir -p keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > keystore/anyfile-upload-key.jks
+          test -s keystore/anyfile-upload-key.jks
+          echo "ANYFILE keystore restored."
 
-      - name: Verify keystore
+      - name: Create keystore properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          test -s anyfile-upload-key.jks
-          echo "Keystore restored successfully."
+          {
+            echo "storeFile=keystore/anyfile-upload-key.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
 
       - name: Build signed APK and AAB
-        env:
-          GANDER_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          GANDER_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          mkdir -p keystore
-          cp anyfile-upload-key.jks keystore/gander.jks
-          ./gradlew assembleRelease bundleRelease
+        run: ./gradlew assembleRelease bundleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -48,7 +53,7 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
-      - name: Upload AAB
+      - name: Upload Play Store AAB
         uses: actions/upload-artifact@v4
         with:
           name: ANYFILE-PLAY-STORE-AAB

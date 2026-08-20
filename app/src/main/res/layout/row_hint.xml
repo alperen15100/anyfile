@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingStart="20dp"
     android:paddingEnd="20dp"
-    android:paddingTop="4dp"
+    android:paddingTop="2dp"
     android:paddingBottom="12dp"
     android:lineSpacingExtra="2dp"
     android:textAppearance="?attr/textAppearanceBodyMedium"

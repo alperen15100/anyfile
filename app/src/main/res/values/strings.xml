@@ -2,10 +2,10 @@
 <resources>
     <string name="app_name">ANYFILE</string>
     <string name="main_subtitle">Open anything. Private. Offline.</string>
-
     <string name="open_a_file">Open a file</string>
     <string name="open_any_file">OPEN ANY FILE</string>
     <string name="file_types">FILE TYPES</string>
+    <string name="quick_tools">QUICK TOOLS</string>
 
     <string name="type_pdf">PDF</string>
     <string name="type_word">WORD</string>
@@ -16,15 +16,46 @@
     <string name="type_audio">AUDIO</string>
     <string name="type_code">TEXT &amp; CODE</string>
 
+    <string name="tool_jpg">IMAGE → JPG</string>
+    <string name="tool_png">IMAGE → PNG</string>
+    <string name="tool_image_pdf">IMAGE → PDF</string>
+    <string name="tool_text_pdf">TEXT → PDF</string>
+    <string name="tool_info">FILE INFO</string>
+    <string name="tool_search">SEARCH</string>
+    <string name="tool_favorites">FAVORITES</string>
+
     <string name="recent_files">RECENT FILES</string>
     <string name="folders">FOLDERS</string>
     <string name="add_folder">Add a folder</string>
-
     <string name="privacy_note">Your files stay on your device.</string>
     <string name="no_recents_hint">Files you open will appear here for quick access.</string>
     <string name="no_folders_hint">Add a folder to browse its files inside ANYFILE. No storage permission is required.</string>
     <string name="empty_folder">Nothing to show in this folder.</string>
     <string name="removed">Removed</string>
+
+    <string name="tool_done">Done</string>
+    <string name="tool_failed">This conversion could not be completed</string>
+    <string name="file_info">File info</string>
+    <string name="file_info_name">Name</string>
+    <string name="file_info_type">Type</string>
+    <string name="file_info_size">Size</string>
+    <string name="unknown_type">Unknown</string>
+    <string name="unknown_size">Unknown</string>
+
+    <string name="favorites">Favorites</string>
+    <string name="add_favorite">Add to favorites</string>
+    <string name="remove_favorite">Remove from favorites</string>
+    <string name="favorite_added">Added to favorites</string>
+    <string name="favorite_removed">Removed from favorites</string>
+    <string name="no_favorites">No favorites yet. Long-press a recent file to add one.</string>
+    <string name="remove_from_recents">Remove from recent files</string>
+
+    <string name="search_files">Search files</string>
+    <string name="search_hint">File name</string>
+    <string name="search">Search</string>
+    <string name="search_needs_folder">Add a folder first to search inside it</string>
+    <string name="no_search_results">No matching files found</string>
+    <string name="search_results">%1$d results</string>
 
     <string name="search_in_document">Search in document</string>
     <string name="share_file">Share</string>
@@ -47,18 +78,15 @@
     <string name="about_permissions_label">Permissions this app requests</string>
     <string name="about_permissions_none">None</string>
     <string name="about_permissions_detail">Checked directly from Android. ANYFILE has no internet permission, so it cannot upload your files.</string>
-
     <string name="about_made_by">ANYFILE</string>
     <string name="about_made_by_url" translatable="false">https://github.com/alperen15100/anyfile</string>
     <string name="about_source">Source code</string>
     <string name="about_source_url" translatable="false">github.com/alperen15100/anyfile</string>
-
     <string name="about_licences">Open source licences</string>
     <string name="about_licences_detail">Full text for every bundled library</string>
     <string name="about_copyright" translatable="false">ANYFILE is based on MIT-licensed open-source software. Original Gander copyright © 2026 Arjun Maniyani.</string>
     <string name="about_close">Close</string>
     <string name="no_browser">No app can open links</string>
-
     <string name="licences_file_name" translatable="false">Open source licences.md</string>
     <string name="licences_failed">The licences file can\'t be opened</string>
 
@@ -66,7 +94,6 @@
     <string name="render_gone_crashed">The document viewer stopped unexpectedly</string>
     <string name="render_gone_detail">The file itself is untouched. Reloading it usually works.</string>
     <string name="render_gone_reload">Reload</string>
-
     <string name="save_copy">Save a copy</string>
     <string name="save_copy_done">Copy saved</string>
     <string name="save_copy_failed">The copy could not be saved</string>

@@ -4,6 +4,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.os.Build
+import android.provider.OpenableColumns
+import com.google.android.material.button.MaterialButton
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.Locale
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -52,6 +63,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var homeHero: View
 
+    private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO }
+    private var pendingTool: ToolAction? = null
+
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             stack.removeLast()
@@ -75,6 +89,32 @@ class MainActivity : AppCompatActivity() {
                 render()
             }
         }
+
+
+    private val pickToolFile =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) handleToolFile(uri)
+        }
+
+    private val createOutput =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { outUri ->
+            val input = pendingInputUri
+            val action = pendingTool
+            if (outUri != null && input != null && action != null) {
+                val ok = when (action) {
+                    ToolAction.IMAGE_TO_JPG -> convertImage(input, outUri, Bitmap.CompressFormat.JPEG)
+                    ToolAction.IMAGE_TO_PNG -> convertImage(input, outUri, Bitmap.CompressFormat.PNG)
+                    ToolAction.IMAGE_TO_PDF -> imageToPdf(input, outUri)
+                    ToolAction.TEXT_TO_PDF -> textToPdf(input, outUri)
+                    ToolAction.FILE_INFO -> false
+                }
+                Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingInputUri = null
+            pendingTool = null
+        }
+
+    private var pendingInputUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,9 +155,8 @@ class MainActivity : AppCompatActivity() {
             openDocument.launch(arrayOf("*/*"))
         }
 
-        findViewById<View>(R.id.typePdf).setOnClickListener {
-            openDocument.launch(arrayOf("application/pdf"))
-        }
+        // File type shortcuts
+        findViewById<View>(R.id.typePdf).setOnClickListener { openDocument.launch(arrayOf("application/pdf")) }
         findViewById<View>(R.id.typeWord).setOnClickListener {
             openDocument.launch(arrayOf(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -137,18 +176,21 @@ class MainActivity : AppCompatActivity() {
                 "application/vnd.ms-powerpoint"
             ))
         }
-        findViewById<View>(R.id.typeImages).setOnClickListener {
-            openDocument.launch(arrayOf("image/*"))
-        }
-        findViewById<View>(R.id.typeVideo).setOnClickListener {
-            openDocument.launch(arrayOf("video/*"))
-        }
-        findViewById<View>(R.id.typeAudio).setOnClickListener {
-            openDocument.launch(arrayOf("audio/*"))
-        }
+        findViewById<View>(R.id.typeImages).setOnClickListener { openDocument.launch(arrayOf("image/*")) }
+        findViewById<View>(R.id.typeVideo).setOnClickListener { openDocument.launch(arrayOf("video/*")) }
+        findViewById<View>(R.id.typeAudio).setOnClickListener { openDocument.launch(arrayOf("audio/*")) }
         findViewById<View>(R.id.typeCode).setOnClickListener {
             openDocument.launch(arrayOf("text/*", "application/json", "application/xml"))
         }
+
+        // V3 quick tools — all free
+        findViewById<View>(R.id.toolJpg).setOnClickListener { launchTool(ToolAction.IMAGE_TO_JPG, arrayOf("image/*")) }
+        findViewById<View>(R.id.toolPng).setOnClickListener { launchTool(ToolAction.IMAGE_TO_PNG, arrayOf("image/*")) }
+        findViewById<View>(R.id.toolImagePdf).setOnClickListener { launchTool(ToolAction.IMAGE_TO_PDF, arrayOf("image/*")) }
+        findViewById<View>(R.id.toolTextPdf).setOnClickListener { launchTool(ToolAction.TEXT_TO_PDF, arrayOf("text/*", "application/json", "application/xml")) }
+        findViewById<View>(R.id.toolInfo).setOnClickListener { launchTool(ToolAction.FILE_INFO, arrayOf("*/*")) }
+        findViewById<View>(R.id.toolSearch).setOnClickListener { showSearchDialog() }
+        findViewById<View>(R.id.toolFavorites).setOnClickListener { showFavorites() }
 
         onBackPressedDispatcher.addCallback(this, backCallback)
     }
@@ -291,14 +333,9 @@ class MainActivity : AppCompatActivity() {
                 val uri = Uri.parse(r.uri)
                 rows += Row.Item(
                     badge, color, r.name,
-                    DateUtils.getRelativeTimeSpanString(r.time).toString(),
+                    relativeTimeEnglish(r.time),
                     onClick = { openInViewer(uri) },
-                    onLongClick = {
-                        Recents.remove(this, r.uri)
-                        Thumbs.evict(this, r.uri)
-                        Toast.makeText(this, R.string.removed, Toast.LENGTH_SHORT).show()
-                        render()
-                    },
+                    onLongClick = { showRecentOptions(r.uri, r.name) },
                     thumbUri = uri.takeIf { Thumbs.supported(FileKind.detect(ext, null), ext) },
                     thumbExt = ext
                 )
@@ -402,6 +439,319 @@ class MainActivity : AppCompatActivity() {
         }
         if (rows.isEmpty()) rows += Row.Hint(getString(R.string.empty_folder))
         return rows
+    }
+
+
+    private fun launchTool(action: ToolAction, mimeTypes: Array<String>) {
+        pendingTool = action
+        pickToolFile.launch(mimeTypes)
+    }
+
+    private fun handleToolFile(uri: Uri) {
+        when (pendingTool) {
+            ToolAction.FILE_INFO -> {
+                showFileInfo(uri)
+                pendingTool = null
+            }
+            ToolAction.IMAGE_TO_JPG -> {
+                pendingInputUri = uri
+                createOutput.launch(defaultOutputName(uri, "jpg"))
+            }
+            ToolAction.IMAGE_TO_PNG -> {
+                pendingInputUri = uri
+                createOutput.launch(defaultOutputName(uri, "png"))
+            }
+            ToolAction.IMAGE_TO_PDF -> {
+                pendingInputUri = uri
+                createOutput.launch(defaultOutputName(uri, "pdf"))
+            }
+            ToolAction.TEXT_TO_PDF -> {
+                pendingInputUri = uri
+                createOutput.launch(defaultOutputName(uri, "pdf"))
+            }
+            null -> Unit
+        }
+    }
+
+    private fun displayName(uri: Uri): String {
+        return runCatching {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }
+        }.getOrNull() ?: uri.lastPathSegment ?: "file"
+    }
+
+    private fun fileSize(uri: Uri): Long {
+        return runCatching {
+            contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getLong(0) else 0L
+            } ?: 0L
+        }.getOrDefault(0L)
+    }
+
+    private fun defaultOutputName(uri: Uri, ext: String): String {
+        val n = displayName(uri)
+        return n.substringBeforeLast('.', n) + "." + ext
+    }
+
+    private fun decodeBitmap(uri: Uri): Bitmap? = runCatching {
+        if (Build.VERSION.SDK_INT >= 28) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)) { decoder, _, _ ->
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            }
+        } else {
+            contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        }
+    }.getOrNull()
+
+    private fun convertImage(input: Uri, output: Uri, format: Bitmap.CompressFormat): Boolean = runCatching {
+        val bitmap = decodeBitmap(input) ?: return@runCatching false
+        contentResolver.openOutputStream(output)?.use { out ->
+            bitmap.compress(format, if (format == Bitmap.CompressFormat.JPEG) 92 else 100, out)
+        } ?: false
+    }.getOrDefault(false)
+
+    private fun imageToPdf(input: Uri, output: Uri): Boolean = runCatching {
+        val bitmap = decodeBitmap(input) ?: return@runCatching false
+        val pdf = PdfDocument()
+        val pageWidth = 1240
+        val pageHeight = 1754
+        val page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create())
+        val margin = 56f
+        val maxW = pageWidth - margin * 2
+        val maxH = pageHeight - margin * 2
+        val scale = minOf(maxW / bitmap.width, maxH / bitmap.height)
+        val w = bitmap.width * scale
+        val h = bitmap.height * scale
+        val left = (pageWidth - w) / 2f
+        val top = (pageHeight - h) / 2f
+        val dst = android.graphics.RectF(left, top, left + w, top + h)
+        page.canvas.drawBitmap(bitmap, null, dst, Paint(Paint.ANTI_ALIAS_FLAG))
+        pdf.finishPage(page)
+        val ok = contentResolver.openOutputStream(output)?.use {
+            pdf.writeTo(it)
+            true
+        } ?: false
+        pdf.close()
+        ok
+    }.getOrDefault(false)
+
+    private fun textToPdf(input: Uri, output: Uri): Boolean = runCatching {
+        val lines = contentResolver.openInputStream(input)?.use { stream ->
+            BufferedReader(InputStreamReader(stream)).readLines()
+        } ?: return@runCatching false
+
+        val pdf = PdfDocument()
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.BLACK
+            textSize = 28f
+        }
+        val pageWidth = 1240
+        val pageHeight = 1754
+        val left = 72f
+        val right = 72f
+        val top = 90f
+        val bottom = 90f
+        val lineHeight = 42f
+        val maxWidth = pageWidth - left - right
+
+        fun wrap(text: String): List<String> {
+            if (text.isEmpty()) return listOf("")
+            val words = text.split(Regex("\\s+"))
+            val out = mutableListOf<String>()
+            var line = ""
+            for (word in words) {
+                val candidate = if (line.isEmpty()) word else "$line $word"
+                if (paint.measureText(candidate) <= maxWidth) line = candidate
+                else {
+                    if (line.isNotEmpty()) out += line
+                    line = word
+                }
+            }
+            if (line.isNotEmpty()) out += line
+            return out.ifEmpty { listOf("") }
+        }
+
+        var pageNumber = 1
+        var page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+        var y = top
+        for (sourceLine in lines) {
+            for (line in wrap(sourceLine)) {
+                if (y > pageHeight - bottom) {
+                    pdf.finishPage(page)
+                    pageNumber++
+                    page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+                    y = top
+                }
+                page.canvas.drawText(line, left, y, paint)
+                y += lineHeight
+            }
+        }
+        pdf.finishPage(page)
+        val ok = contentResolver.openOutputStream(output)?.use {
+            pdf.writeTo(it)
+            true
+        } ?: false
+        pdf.close()
+        ok
+    }.getOrDefault(false)
+
+    private fun showFileInfo(uri: Uri) {
+        val name = displayName(uri)
+        val type = contentResolver.getType(uri) ?: getString(R.string.unknown_type)
+        val size = fileSize(uri)
+        val text = buildString {
+            append(getString(R.string.file_info_name)).append(": ").append(name).append("\n\n")
+            append(getString(R.string.file_info_type)).append(": ").append(type).append("\n\n")
+            append(getString(R.string.file_info_size)).append(": ")
+            append(if (size > 0) Formatter.formatShortFileSize(this@MainActivity, size) else getString(R.string.unknown_size))
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.file_info)
+            .setMessage(text)
+            .setPositiveButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun favoritesPrefs() = getSharedPreferences("favorites", Context.MODE_PRIVATE)
+
+    private fun favoriteMap(): Map<String, String> =
+        favoritesPrefs().all.mapNotNull { (k, v) -> (v as? String)?.let { k to it } }.toMap()
+
+    private fun isFavorite(uri: String): Boolean = favoritesPrefs().contains(uri)
+
+    private fun toggleFavorite(uri: String, name: String) {
+        val e = favoritesPrefs().edit()
+        if (isFavorite(uri)) e.remove(uri) else e.putString(uri, name)
+        e.apply()
+        Toast.makeText(
+            this,
+            if (isFavorite(uri)) R.string.favorite_added else R.string.favorite_removed,
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun showRecentOptions(uri: String, name: String) {
+        val favoriteLabel = if (isFavorite(uri)) getString(R.string.remove_favorite) else getString(R.string.add_favorite)
+        val options = arrayOf(favoriteLabel, getString(R.string.remove_from_recents))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(name)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> toggleFavorite(uri, name)
+                    1 -> {
+                        Recents.remove(this, uri)
+                        Thumbs.evict(this, uri)
+                        Toast.makeText(this, R.string.removed, Toast.LENGTH_SHORT).show()
+                        render()
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun showFavorites() {
+        val items = favoriteMap().entries.toList()
+        if (items.isEmpty()) {
+            Toast.makeText(this, R.string.no_favorites, Toast.LENGTH_SHORT).show()
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.favorites)
+            .setItems(items.map { it.value }.toTypedArray()) { _, which ->
+                openInViewer(Uri.parse(items[which].key))
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private data class SearchHit(val name: String, val uri: Uri)
+
+    private fun showSearchDialog() {
+        val input = android.widget.EditText(this).apply {
+            hint = getString(R.string.search_hint)
+            setSingleLine(true)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.search_files)
+            .setView(input)
+            .setPositiveButton(R.string.search) { _, _ ->
+                val q = input.text?.toString().orEmpty().trim()
+                if (q.isNotEmpty()) searchFiles(q)
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun searchFiles(query: String) {
+        val roots = contentResolver.persistedUriPermissions
+            .filter { it.isReadPermission && isTreeUri(it.uri) }
+            .map { it.uri }
+
+        if (roots.isEmpty()) {
+            Toast.makeText(this, R.string.search_needs_folder, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val hits = mutableListOf<SearchHit>()
+        roots.forEach { root ->
+            val rootId = runCatching { DocumentsContract.getTreeDocumentId(root) }.getOrNull() ?: return@forEach
+            searchTree(root, rootId, query, hits, 120)
+        }
+
+        if (hits.isEmpty()) {
+            Toast.makeText(this, R.string.no_search_results, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.search_results, hits.size))
+            .setItems(hits.map { it.name }.toTypedArray()) { _, which -> openInViewer(hits[which].uri) }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun searchTree(treeUri: Uri, parentId: String, query: String, out: MutableList<SearchHit>, limit: Int) {
+        if (out.size >= limit) return
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentId)
+        runCatching {
+            contentResolver.query(
+                childrenUri,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE
+                ),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext() && out.size < limit) {
+                    val id = c.getString(0)
+                    val name = c.getString(1) ?: continue
+                    val mime = c.getString(2) ?: ""
+                    if (name.startsWith(".")) continue
+                    if (mime == DocumentsContract.Document.MIME_TYPE_DIR) {
+                        searchTree(treeUri, id, query, out, limit)
+                    } else if (name.contains(query, ignoreCase = true)) {
+                        out += SearchHit(name, DocumentsContract.buildDocumentUriUsingTree(treeUri, id))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun relativeTimeEnglish(time: Long): String {
+        val diff = (System.currentTimeMillis() - time).coerceAtLeast(0L)
+        val minute = 60_000L
+        val hour = 60 * minute
+        val day = 24 * hour
+        return when {
+            diff < minute -> "Just now"
+            diff < hour -> "${diff / minute} min ago"
+            diff < day -> "${diff / hour} hr ago"
+            diff < 2 * day -> "Yesterday"
+            diff < 7 * day -> "${diff / day} days ago"
+            else -> java.text.SimpleDateFormat("MMM d, yyyy", Locale.US).format(java.util.Date(time))
+        }
     }
 
     private fun isTreeUri(uri: Uri): Boolean =

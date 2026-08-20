@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private val stack = ArrayDeque<Crumb>()
     private val adapter = RowAdapter()
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var homeHero: View
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -104,9 +105,51 @@ class MainActivity : AppCompatActivity() {
             it.layoutManager = LinearLayoutManager(this)
             it.adapter = adapter
         }
+        homeHero = findViewById(R.id.homeHero)
+
+        findViewById<View>(R.id.openHeroButton).setOnClickListener {
+            openDocument.launch(arrayOf("*/*"))
+        }
+
         findViewById<ExtendedFloatingActionButton>(R.id.openFab).setOnClickListener {
             openDocument.launch(arrayOf("*/*"))
         }
+
+        findViewById<View>(R.id.typePdf).setOnClickListener {
+            openDocument.launch(arrayOf("application/pdf"))
+        }
+        findViewById<View>(R.id.typeWord).setOnClickListener {
+            openDocument.launch(arrayOf(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword"
+            ))
+        }
+        findViewById<View>(R.id.typeExcel).setOnClickListener {
+            openDocument.launch(arrayOf(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-excel",
+                "text/csv"
+            ))
+        }
+        findViewById<View>(R.id.typeSlides).setOnClickListener {
+            openDocument.launch(arrayOf(
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.ms-powerpoint"
+            ))
+        }
+        findViewById<View>(R.id.typeImages).setOnClickListener {
+            openDocument.launch(arrayOf("image/*"))
+        }
+        findViewById<View>(R.id.typeVideo).setOnClickListener {
+            openDocument.launch(arrayOf("video/*"))
+        }
+        findViewById<View>(R.id.typeAudio).setOnClickListener {
+            openDocument.launch(arrayOf("audio/*"))
+        }
+        findViewById<View>(R.id.typeCode).setOnClickListener {
+            openDocument.launch(arrayOf("text/*", "application/json", "application/xml"))
+        }
+
         onBackPressedDispatcher.addCallback(this, backCallback)
     }
 
@@ -192,7 +235,7 @@ class MainActivity : AppCompatActivity() {
     }.getOrNull()
 
     /**
-     * Gander shows its own licences. The asset is copied into the cache and
+     * ANYFILE shows its bundled open-source licences. The asset is copied into the cache and
      * handed to the viewer as a plain path, so the bundled Markdown renderer
      * draws it and there is no second document surface to keep alive.
      *
@@ -215,7 +258,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Hands a URL to whichever browser the user has. Gander never fetches
+     * Hands a URL to whichever browser the user has. ANYFILE never fetches
      * anything itself, and without the INTERNET permission it could not.
      */
     private fun openUrl(url: String) {
@@ -226,6 +269,7 @@ class MainActivity : AppCompatActivity() {
     private fun render() {
         backCallback.isEnabled = stack.isNotEmpty()
         val rows = if (stack.isEmpty()) homeRows() else folderRows(stack.last())
+        homeHero.visibility = if (stack.isEmpty()) View.VISIBLE else View.GONE
         toolbar.title = if (stack.isEmpty()) getString(R.string.app_name) else stack.last().label
         toolbar.navigationIcon =
             if (stack.isEmpty()) null

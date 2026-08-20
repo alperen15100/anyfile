@@ -10,6 +10,7 @@ import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
+import android.widget.LinearLayout
 import android.content.ContentValues
 import android.provider.MediaStore
 import android.os.Build

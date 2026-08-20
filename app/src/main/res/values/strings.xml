@@ -7,6 +7,7 @@
     <string name="about_short">About</string>
     <string name="tools_title">All tools</string>
     <string name="tools_subtitle">PDF, image, archive and file utilities — all on your device.</string>
+    <string name="preview_empty">This file is empty.</string>
     <string name="tools_footer">Offline by design. Your files stay on your device.</string>
     <string name="home_tools_teaser">Need to convert, compress, merge, split or extract?</string>
     <string name="image_tools">IMAGE TOOLS</string>
@@ -38,7 +39,7 @@
     <string name="create_zip">CREATE ZIP</string>
     <string name="extract_zip">EXTRACT ZIP</string>
     <string name="images_pdf">IMAGES → PDF</string>
-    <string name="detect_file">OPEN UNKNOWN FILE</string>
+    <string name="detect_file">SMART OPEN FILE</string>
     <string name="extract_done">Files extracted</string>
     <string name="open_unknown_file">Open unknown file</string>
     <string name="try_to_open">Try to open</string>

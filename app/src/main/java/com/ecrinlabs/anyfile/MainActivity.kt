@@ -31,6 +31,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import java.nio.charset.Charset
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -405,11 +408,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openInViewer(uri: Uri) {
-        startActivity(
-            Intent(this, ViewerActivity::class.java)
-                .setData(uri)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        )
+        val name = displayName(uri)
+        val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
+        val mime = contentResolver.getType(uri)
+        val kind = FileKind.detect(ext, mime)
+
+        if (kind == FileKind.UNSUPPORTED || isUniversalTextExtension(ext)) {
+            showUniversalPreview(uri)
+            return
+        }
+
+        runCatching {
+            startActivity(
+                Intent(this, ViewerActivity::class.java)
+                    .setData(uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            )
+        }.onFailure {
+            showUniversalPreview(uri)
+        }
     }
 
     /**
@@ -1225,6 +1242,183 @@ class MainActivity : AppCompatActivity() {
         ok
     }.getOrDefault(false)
 
+    private fun isUniversalTextExtension(ext: String): Boolean =
+        ext in setOf(
+            "log", "ini", "cfg", "conf", "yaml", "yml", "toml", "env",
+            "properties", "sql", "sh", "bash", "zsh", "bat", "cmd", "ps1",
+            "kt", "kts", "java", "py", "rb", "php", "go", "rs", "swift",
+            "js", "mjs", "cjs", "ts", "jsx", "tsx", "html", "htm", "css",
+            "scss", "sass", "less", "vue", "svelte", "gradle", "gitignore",
+            "dockerfile", "makefile"
+        )
+
+    private data class SignatureResult(
+        val label: String,
+        val detail: String? = null
+    )
+
+    private fun signatureOf(bytes: ByteArray): SignatureResult {
+        fun starts(vararg v: Int): Boolean =
+            bytes.size >= v.size && v.indices.all { (bytes[it].toInt() and 0xFF) == v[it] }
+
+        return when {
+            starts(0x25, 0x50, 0x44, 0x46) ->
+                SignatureResult("PDF document", "Detected from file signature")
+            starts(0x50, 0x4B, 0x03, 0x04) || starts(0x50, 0x4B, 0x05, 0x06) ->
+                SignatureResult("ZIP / Office archive", "ZIP container signature")
+            starts(0x52, 0x61, 0x72, 0x21, 0x1A, 0x07) ->
+                SignatureResult("RAR archive", "RAR signature detected")
+            starts(0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C) ->
+                SignatureResult("7Z archive", "7-Zip signature detected")
+            starts(0x1F, 0x8B) ->
+                SignatureResult("GZIP archive", "GZIP signature detected")
+            starts(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A) ->
+                SignatureResult("PNG image", "PNG signature detected")
+            starts(0xFF, 0xD8, 0xFF) ->
+                SignatureResult("JPEG image", "JPEG signature detected")
+            starts(0x47, 0x49, 0x46, 0x38) ->
+                SignatureResult("GIF image", "GIF signature detected")
+            starts(0x53, 0x51, 0x4C, 0x69, 0x74, 0x65, 0x20, 0x66, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x20, 0x33, 0x00) ->
+                SignatureResult("SQLite database", "SQLite 3 database signature")
+            starts(0x7F, 0x45, 0x4C, 0x46) ->
+                SignatureResult("ELF binary", "Linux/Android native binary")
+            starts(0x4D, 0x5A) ->
+                SignatureResult("Windows executable / binary", "MZ signature detected")
+            starts(0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1) ->
+                SignatureResult("Legacy Microsoft Office document", "OLE compound document")
+            bytes.size >= 12 &&
+                String(bytes.copyOfRange(4, 8), Charsets.US_ASCII) == "ftyp" ->
+                SignatureResult("MP4 / HEIF media container", "ISO Base Media File Format")
+            bytes.size >= 12 &&
+                String(bytes.copyOfRange(0, 4), Charsets.US_ASCII) == "RIFF" &&
+                String(bytes.copyOfRange(8, 12), Charsets.US_ASCII) == "WAVE" ->
+                SignatureResult("WAV audio", "RIFF/WAVE signature")
+            bytes.size >= 12 &&
+                String(bytes.copyOfRange(0, 4), Charsets.US_ASCII) == "RIFF" &&
+                String(bytes.copyOfRange(8, 12), Charsets.US_ASCII) == "WEBP" ->
+                SignatureResult("WebP image", "RIFF/WebP signature")
+            else -> SignatureResult("Unknown file")
+        }
+    }
+
+    private fun looksLikeText(bytes: ByteArray): Boolean {
+        if (bytes.isEmpty()) return true
+        if (bytes.take(1024).any { it.toInt() == 0 }) return false
+        val sample = bytes.take(4096)
+        var printable = 0
+        for (b in sample) {
+            val c = b.toInt() and 0xFF
+            if (c == 9 || c == 10 || c == 13 || c in 32..126 || c >= 0xC2) printable++
+        }
+        return printable.toDouble() / sample.size.coerceAtLeast(1) > 0.82
+    }
+
+    private fun readPreviewBytes(uri: Uri, max: Int = 65536): ByteArray =
+        runCatching {
+            contentResolver.openInputStream(uri)?.use { input ->
+                val buffer = ByteArray(max)
+                var total = 0
+                while (total < max) {
+                    val n = input.read(buffer, total, max - total)
+                    if (n <= 0) break
+                    total += n
+                }
+                buffer.copyOf(total)
+            } ?: ByteArray(0)
+        }.getOrDefault(ByteArray(0))
+
+    private fun hexPreview(bytes: ByteArray, max: Int = 512): String {
+        val b = bytes.take(max)
+        if (b.isEmpty()) return getString(R.string.preview_empty)
+        val out = StringBuilder()
+        b.chunked(16).forEachIndexed { row, chunk ->
+            out.append(String.format(Locale.US, "%08X  ", row * 16))
+            chunk.forEach { out.append(String.format(Locale.US, "%02X ", it.toInt() and 0xFF)) }
+            repeat(16 - chunk.size) { out.append("   ") }
+            out.append(" ")
+            chunk.forEach {
+                val c = it.toInt() and 0xFF
+                out.append(if (c in 32..126) c.toChar() else '.')
+            }
+            out.append('\n')
+        }
+        return out.toString()
+    }
+
+    private fun showUniversalPreview(uri: Uri) {
+        val name = displayName(uri)
+        val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
+        val mime = contentResolver.getType(uri) ?: "application/octet-stream"
+        val bytes = readPreviewBytes(uri)
+        val signature = signatureOf(bytes)
+        val asText = isUniversalTextExtension(ext) || mime.startsWith("text/") || looksLikeText(bytes)
+
+        val content = if (asText) {
+            val decoded = runCatching { String(bytes, Charsets.UTF_8) }
+                .getOrElse { String(bytes, Charset.defaultCharset()) }
+            decoded.take(12000).ifEmpty { getString(R.string.preview_empty) }
+        } else {
+            hexPreview(bytes)
+        }
+
+        val info = buildString {
+            append(signature.label)
+            signature.detail?.let { append(" · ").append(it) }
+            append("\n")
+            append(if (ext.isBlank()) getString(R.string.unknown_none) else ".$ext")
+            append(" · ").append(mime)
+            val size = fileSize(uri)
+            if (size > 0) append(" · ").append(Formatter.formatShortFileSize(this@MainActivity, size))
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 0, pad, 0)
+        }
+
+        val meta = TextView(this).apply {
+            text = info
+            setTextIsSelectable(true)
+            setPadding(0, 0, 0, (12 * resources.displayMetrics.density).toInt())
+        }
+
+        val preview = TextView(this).apply {
+            text = content
+            setTextIsSelectable(true)
+            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 12f
+            setPadding(
+                (12 * resources.displayMetrics.density).toInt(),
+                (12 * resources.displayMetrics.density).toInt(),
+                (12 * resources.displayMetrics.density).toInt(),
+                (12 * resources.displayMetrics.density).toInt()
+            )
+            setBackgroundColor(0x11000000)
+        }
+
+        val scroll = ScrollView(this).apply {
+            addView(preview)
+        }
+
+        container.addView(meta)
+        container.addView(
+            scroll,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (360 * resources.displayMetrics.density).toInt()
+            )
+        )
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(name)
+            .setView(container)
+            .setPositiveButton(R.string.share_file) { _, _ -> shareUri(uri) }
+            .setNeutralButton(R.string.file_info) { _, _ -> showFileInfo(uri) }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
     private fun showUnknownFile(uri: Uri) {
         val name = displayName(uri)
         val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
@@ -1232,7 +1426,9 @@ class MainActivity : AppCompatActivity() {
             ?: android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
             ?: "application/octet-stream"
 
-        val category = when {
+        val previewBytes = readPreviewBytes(uri, 4096)
+        val signature = signatureOf(previewBytes)
+        val category = if (signature.label != "Unknown file") signature.label else when {
             mime == "application/pdf" -> "PDF document"
             mime.startsWith("image/") -> "Image"
             mime.startsWith("video/") -> "Video"

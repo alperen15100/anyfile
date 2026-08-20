@@ -1,0 +1,72 @@
+name: ANYFILE Final APK + AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Restore signing key from HEX
+        env:
+          KEYSTORE_HEX: ${{ secrets.KEYSTORE_HEX }}
+        run: |
+          mkdir -p keystore
+          printf '%s' "$KEYSTORE_HEX" | xxd -r -p > keystore/anyfile-upload-key.jks
+          test -s keystore/anyfile-upload-key.jks
+          echo "Keystore restored."
+          ls -lh keystore/anyfile-upload-key.jks
+
+      - name: Create keystore.properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          {
+            echo "storeFile=keystore/anyfile-upload-key.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: Verify signing configuration
+        run: |
+          test -s keystore/anyfile-upload-key.jks
+          test -s keystore.properties
+          keytool -list \
+            -keystore keystore/anyfile-upload-key.jks \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -alias "${{ secrets.KEY_ALIAS }}" > /dev/null
+          echo "Signing configuration OK."
+
+      - name: Build signed APK and AAB
+        run: |
+          ./gradlew clean assembleRelease bundleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANYFILE-Release-APK
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload Play Store AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANYFILE-PlayStore-AAB
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error

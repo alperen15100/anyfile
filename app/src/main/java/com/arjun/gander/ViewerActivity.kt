@@ -1,11 +1,14 @@
 package com.arjun.gander
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.view.View
@@ -21,6 +24,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
@@ -38,15 +42,18 @@ import com.arjun.gander.FileKind.Companion.detect
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.Executors
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class ViewerActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PATH = "path"
+        private const val STATE_COPY_SOURCE = "copy_source"
         private const val ASSET_HOST = "appassets.androidplatform.net"
         private const val EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.documents"
         private const val DOWNLOADS_AUTHORITY = "com.android.providers.downloads.documents"
@@ -113,10 +120,121 @@ class ViewerActivity : AppCompatActivity() {
     private var webView: WebView? = null
     private var player: ExoPlayer? = null
 
+    /** The file the destination picker is currently open for. */
+    private var copySource: Uri? = null
+
+    /**
+     * ACTION_CREATE_DOCUMENT with the type set per file. The stock contract fixes
+     * it at construction, and the viewer does not know what it is showing until an
+     * intent arrives, so the picker would otherwise have to be told that every file
+     * is of unknown type and would suggest names without extensions.
+     */
+    private inner class CreateTypedDocument : ActivityResultContracts.CreateDocument("*/*") {
+        var type: String = "*/*"
+        override fun createIntent(context: Context, input: String): Intent =
+            super.createIntent(context, input).setType(type)
+    }
+
+    private val createDocument = CreateTypedDocument()
+
+    /**
+     * Writes the open file to wherever the reader pointed the picker.
+     *
+     * No permission is involved. The picker returns a write grant for the single
+     * document it just created and for nothing around it, which is the same shape
+     * of grant the home screen already takes for folders, and it is why this can
+     * exist in an app whose permission list has to stay empty.
+     */
+    private val saveCopy = registerForActivityResult(createDocument) { dest ->
+        val src = copySource
+        copySource = null
+        if (dest == null || src == null) return@registerForActivityResult
+
+        // Off the main thread. A document is small enough that it would not matter,
+        // but Gander opens video too, and copying a few hundred megabytes inline is
+        // an ANR rather than a slow save.
+        val app = applicationContext
+        val main = Handler(Looper.getMainLooper())
+        val bar = findViewById<LinearProgressIndicator>(R.id.saveProgress)
+
+        // Asked once, up front: a provider that cannot say how long the file is
+        // gets a spinner rather than a bar that would have to invent a position.
+        val total = documentLength(src)
+        bar.isIndeterminate = total <= 0L
+        if (total > 0L) {
+            bar.max = 100
+            bar.progress = 0
+        }
+        bar.visibility = View.VISIBLE
+
+        // Shut down immediately after submitting: the already-queued copy still
+        // runs to completion, and the worker thread ends with it instead of idling
+        // for the life of the process once per save
+        val worker = Executors.newSingleThreadExecutor()
+        worker.execute {
+            val saved = runCatching {
+                contentResolver.openInputStream(src).use { input ->
+                    contentResolver.openOutputStream(dest).use { output ->
+                        val from = checkNotNull(input)
+                        val to = checkNotNull(output)
+                        // copyTo would be one line, but it reports nothing on the way
+                        // through, and the whole point here is to be able to say how
+                        // far along a large file is
+                        val buffer = ByteArray(64 * 1024)
+                        var copied = 0L
+                        var shown = -1
+                        while (true) {
+                            val read = from.read(buffer)
+                            if (read < 0) break
+                            to.write(buffer, 0, read)
+                            copied += read
+                            if (total > 0L) {
+                                // Whole percent only: a 500 MB file would otherwise
+                                // post thousands of updates nobody can see
+                                val percent = ((copied * 100) / total).toInt()
+                                if (percent != shown) {
+                                    shown = percent
+                                    main.post {
+                                        if (!isDestroyed) bar.setProgressCompat(percent, true)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }.isSuccess
+            // A failed copy has already created the document and may have written
+            // part of it, and half a file under the right name is worse than none:
+            // it opens, it looks complete, and it is not.
+            if (!saved) runCatching { DocumentsContract.deleteDocument(contentResolver, dest) }
+            main.post {
+                if (!isDestroyed) bar.visibility = View.GONE
+                Toast.makeText(
+                    app,
+                    if (saved) R.string.save_copy_done else R.string.save_copy_failed,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        worker.shutdown()
+    }
+
+    /**
+     * The picker outlives the activity if Android reclaims the process while it is
+     * open, and the callback is handed the destination but never the source, so
+     * without this the save comes back to a null source and silently does nothing.
+     */
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_COPY_SOURCE, copySource?.toString())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_viewer)
         applySystemBarInsets(findViewById(R.id.root))
+
+        copySource = savedInstanceState?.getString(STATE_COPY_SOURCE)?.let(Uri::parse)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { finish() }
@@ -158,15 +276,35 @@ class ViewerActivity : AppCompatActivity() {
             else -> showWeb(container, uri, kind, name, ext)
         }
         setUpSearch(toolbar, kind)
-        setUpActions(toolbar, uri, ext, mime)
+        setUpActions(toolbar, uri, name, ext, mime)
     }
 
     /** Share and "show in file manager" toolbar actions. */
-    private fun setUpActions(toolbar: MaterialToolbar, uri: Uri, ext: String, mime: String?) {
+    private fun setUpActions(
+        toolbar: MaterialToolbar,
+        uri: Uri,
+        name: String,
+        ext: String,
+        mime: String?
+    ) {
         toolbar.menu.findItem(R.id.action_share).setOnMenuItemClickListener {
             shareFile(uri, ext, mime)
             true
         }
+        toolbar.menu.findItem(R.id.action_save_copy).setOnMenuItemClickListener {
+            copySource = uri
+            createDocument.type = mime
+                ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+                ?: "*/*"
+            // No picker on the device is the only way this throws, and it leaves
+            // the reader on the document rather than on a crash
+            runCatching { saveCopy.launch(name) }.onFailure {
+                copySource = null
+                Toast.makeText(this, R.string.save_copy_failed, Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
+
         val folder = containingFolder(uri)
         toolbar.menu.findItem(R.id.action_open_folder).apply {
             isVisible = folder != null

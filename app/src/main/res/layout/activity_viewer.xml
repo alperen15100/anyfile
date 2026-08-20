@@ -75,6 +75,15 @@
             android:src="@drawable/ic_close" />
     </LinearLayout>
 
+    <!-- Sits between the toolbar and the document so a long save reports itself
+         without covering what is being read. Gone unless a copy is running. -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/saveProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:trackCornerRadius="0dp" />
+
     <FrameLayout
         android:id="@+id/container"
         android:layout_width="match_parent"

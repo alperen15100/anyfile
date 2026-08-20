@@ -13,6 +13,11 @@
         android:title="@string/share_file"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_save_copy"
+        android:title="@string/save_copy"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_open_folder"
         android:title="@string/show_in_file_manager"
         android:visible="false"

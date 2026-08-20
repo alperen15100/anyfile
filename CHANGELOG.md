@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- The file you are looking at can be kept, through **Save a copy** in the viewer menu.
+  It is meant for the file that came from somewhere else: an attachment, or a document
+  another app hands over, which Gander is allowed to read only for as long as that
+  screen is open and which is out of reach once you leave. Where the copy goes is
+  chosen in Android's own picker, so this asks for no permission and Gander is handed
+  the one file it just wrote and nothing around it. A large copy reports its progress
+  under the toolbar, and one that fails takes its half-written file with it rather than
+  leaving something that opens and looks complete (thanks @sebestyn)
+
 - A document left open no longer takes the whole app down with it when Android runs
   short of memory. Everything drawn by the sandboxed viewer, PDFs included, is
   rendered in a process of its own, and Android is free to end that process while

@@ -9,6 +9,9 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import android.graphics.pdf.PdfRenderer
+import android.content.ContentValues
+import android.provider.MediaStore
 import android.os.Build
 import android.provider.OpenableColumns
 import com.google.android.material.button.MaterialButton
@@ -66,7 +69,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var homeHero: View
 
-    private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO, EXTRACT_ZIP }
+    private enum class ToolAction { IMAGE_TO_JPG, IMAGE_TO_PNG, IMAGE_TO_PDF, TEXT_TO_PDF, FILE_INFO, EXTRACT_ZIP, UNKNOWN_FILE }
     private var pendingTool: ToolAction? = null
     private var pendingZipInputs: List<Uri> = emptyList()
     private var pendingZipUri: Uri? = null
@@ -113,6 +116,7 @@ class MainActivity : AppCompatActivity() {
                     ToolAction.TEXT_TO_PDF -> textToPdf(input, outUri)
                     ToolAction.FILE_INFO -> false
                     ToolAction.EXTRACT_ZIP -> false
+                    ToolAction.UNKNOWN_FILE -> false
                 }
                 Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
             }
@@ -175,6 +179,95 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, if (ok) R.string.tool_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
             }
             pendingMultiImages = emptyList()
+        }
+
+
+    private var pendingPdfInputs: List<Uri> = emptyList()
+    private var pendingSinglePdf: Uri? = null
+    private var pendingImageUri: Uri? = null
+    private var pendingResizeWidth = 0
+    private var pendingResizeHeight = 0
+
+    private val pickPdfsForMerge =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            if (uris.isNotEmpty()) {
+                pendingPdfInputs = uris
+                createMergedPdf.launch("ANYFILE-merged.pdf")
+            }
+        }
+
+    private val createMergedPdf =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { outUri ->
+            if (outUri != null && pendingPdfInputs.isNotEmpty()) {
+                val ok = rasterMergePdfs(pendingPdfInputs, outUri)
+                Toast.makeText(this, if (ok) R.string.pdf_merge_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingPdfInputs = emptyList()
+        }
+
+    private val pickPdfForSplit =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                pendingSinglePdf = uri
+                showSplitDialog(uri)
+            }
+        }
+
+    private val createSplitPdf =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { outUri ->
+            val input = pendingSinglePdf
+            val range = pendingSplitRange
+            if (outUri != null && input != null && range != null) {
+                val ok = rasterPdfRange(input, outUri, range.first, range.last)
+                Toast.makeText(this, if (ok) R.string.pdf_split_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingSinglePdf = null
+            pendingSplitRange = null
+        }
+
+    private var pendingSplitRange: IntRange? = null
+
+    private val pickPdfForImages =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) exportPdfPagesToImages(uri)
+        }
+
+    private val pickImageForCompress =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+                pendingImageUri = uri
+                createCompressedImage.launch(defaultOutputName(uri, "jpg").substringBeforeLast(".jpg") + "-compressed.jpg")
+            }
+        }
+
+    private val createCompressedImage =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")) { outUri ->
+            val input = pendingImageUri
+            if (outUri != null && input != null) {
+                val ok = compressImage(input, outUri)
+                Toast.makeText(this, if (ok) R.string.image_compress_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingImageUri = null
+        }
+
+    private val pickImageForResize =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) showResizeDialog(uri)
+        }
+
+    private val createResizedImage =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("image/jpeg")) { outUri ->
+            val input = pendingImageUri
+            if (outUri != null && input != null) {
+                val ok = resizeImage(input, outUri, pendingResizeWidth, pendingResizeHeight)
+                Toast.makeText(this, if (ok) R.string.image_resize_done else R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            }
+            pendingImageUri = null
+        }
+
+    private val pickFileForManage =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) showManageFileDialog(uri)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -262,8 +355,27 @@ class MainActivity : AppCompatActivity() {
             pickImagesForPdf.launch(arrayOf("image/*"))
         }
         findViewById<View>(R.id.toolDetect).setOnClickListener {
-            pendingTool = ToolAction.FILE_INFO
+            pendingTool = ToolAction.UNKNOWN_FILE
             pickToolFile.launch(arrayOf("*/*"))
+        }
+
+        findViewById<View>(R.id.toolPdfMerge).setOnClickListener {
+            pickPdfsForMerge.launch(arrayOf("application/pdf"))
+        }
+        findViewById<View>(R.id.toolPdfSplit).setOnClickListener {
+            pickPdfForSplit.launch(arrayOf("application/pdf"))
+        }
+        findViewById<View>(R.id.toolPdfImages).setOnClickListener {
+            pickPdfForImages.launch(arrayOf("application/pdf"))
+        }
+        findViewById<View>(R.id.toolCompressImage).setOnClickListener {
+            pickImageForCompress.launch(arrayOf("image/*"))
+        }
+        findViewById<View>(R.id.toolResizeImage).setOnClickListener {
+            pickImageForResize.launch(arrayOf("image/*"))
+        }
+        findViewById<View>(R.id.toolManageFile).setOnClickListener {
+            pickFileForManage.launch(arrayOf("*/*"))
         }
 
         onBackPressedDispatcher.addCallback(this, backCallback)
@@ -517,6 +629,315 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+    private fun renderPdfPage(renderer: PdfRenderer, index: Int): Bitmap {
+        renderer.openPage(index).use { page ->
+            val scale = 2
+            val bitmap = Bitmap.createBitmap(
+                (page.width * scale).coerceAtLeast(1),
+                (page.height * scale).coerceAtLeast(1),
+                Bitmap.Config.ARGB_8888
+            )
+            bitmap.eraseColor(Color.WHITE)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            return bitmap
+        }
+    }
+
+    private fun addBitmapPage(pdf: PdfDocument, bitmap: Bitmap, pageNumber: Int) {
+        val pageWidth = 1240
+        val pageHeight = 1754
+        val page = pdf.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+        page.canvas.drawColor(Color.WHITE)
+        val margin = 32f
+        val maxW = pageWidth - margin * 2
+        val maxH = pageHeight - margin * 2
+        val scale = minOf(maxW / bitmap.width, maxH / bitmap.height)
+        val w = bitmap.width * scale
+        val h = bitmap.height * scale
+        val left = (pageWidth - w) / 2f
+        val top = (pageHeight - h) / 2f
+        page.canvas.drawBitmap(bitmap, null, android.graphics.RectF(left, top, left + w, top + h), Paint(Paint.ANTI_ALIAS_FLAG))
+        pdf.finishPage(page)
+    }
+
+    private fun rasterMergePdfs(inputs: List<Uri>, output: Uri): Boolean = runCatching {
+        val pdf = PdfDocument()
+        var outputPage = 1
+        for (uri in inputs) {
+            contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                PdfRenderer(pfd).use { renderer ->
+                    for (i in 0 until renderer.pageCount) {
+                        val bitmap = renderPdfPage(renderer, i)
+                        addBitmapPage(pdf, bitmap, outputPage++)
+                        bitmap.recycle()
+                    }
+                }
+            }
+        }
+        val ok = outputPage > 1 && contentResolver.openOutputStream(output)?.use {
+            pdf.writeTo(it)
+            true
+        } == true
+        pdf.close()
+        ok
+    }.getOrDefault(false)
+
+    private fun pdfPageCount(uri: Uri): Int = runCatching {
+        contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+            PdfRenderer(pfd).use { it.pageCount }
+        } ?: 0
+    }.getOrDefault(0)
+
+    private fun showSplitDialog(uri: Uri) {
+        val count = pdfPageCount(uri)
+        if (count <= 0) {
+            Toast.makeText(this, R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            pendingSinglePdf = null
+            return
+        }
+        val input = android.widget.EditText(this).apply {
+            hint = "1-$count"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+            setText("1-$count")
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.pdf_split_title, count))
+            .setMessage(R.string.pdf_split_help)
+            .setView(input)
+            .setPositiveButton(R.string.continue_label) { _, _ ->
+                val parsed = parsePageRange(input.text?.toString().orEmpty(), count)
+                if (parsed == null) {
+                    Toast.makeText(this, R.string.invalid_page_range, Toast.LENGTH_SHORT).show()
+                    pendingSinglePdf = null
+                } else {
+                    pendingSplitRange = parsed
+                    createSplitPdf.launch(defaultOutputName(uri, "pdf").substringBeforeLast(".pdf") + "-split.pdf")
+                }
+            }
+            .setNegativeButton(R.string.about_close) { _, _ -> pendingSinglePdf = null }
+            .show()
+    }
+
+    private fun parsePageRange(text: String, count: Int): IntRange? {
+        val t = text.trim()
+        val parts = t.split("-")
+        val start = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
+        val end = if (parts.size > 1) parts[1].trim().toIntOrNull() ?: return null else start
+        if (start < 1 || end < start || end > count) return null
+        return (start - 1)..(end - 1)
+    }
+
+    private fun rasterPdfRange(input: Uri, output: Uri, start: Int, end: Int): Boolean = runCatching {
+        val pdf = PdfDocument()
+        var outPage = 1
+        contentResolver.openFileDescriptor(input, "r")?.use { pfd ->
+            PdfRenderer(pfd).use { renderer ->
+                val safeEnd = minOf(end, renderer.pageCount - 1)
+                for (i in start..safeEnd) {
+                    val bitmap = renderPdfPage(renderer, i)
+                    addBitmapPage(pdf, bitmap, outPage++)
+                    bitmap.recycle()
+                }
+            }
+        }
+        val ok = outPage > 1 && contentResolver.openOutputStream(output)?.use {
+            pdf.writeTo(it)
+            true
+        } == true
+        pdf.close()
+        ok
+    }.getOrDefault(false)
+
+    private fun exportPdfPagesToImages(uri: Uri) {
+        val count = pdfPageCount(uri)
+        if (count <= 0) {
+            Toast.makeText(this, R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.pdf_to_images)
+            .setMessage(getString(R.string.pdf_to_images_help, count))
+            .setPositiveButton(R.string.continue_label) { _, _ ->
+                exportPdfPagesToPictures(uri)
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun exportPdfPagesToPictures(uri: Uri) {
+        val valuesBase = ContentValues().apply {
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            if (Build.VERSION.SDK_INT >= 29) put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ANYFILE")
+        }
+        var saved = 0
+        runCatching {
+            contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                PdfRenderer(pfd).use { renderer ->
+                    for (i in 0 until renderer.pageCount) {
+                        val bitmap = renderPdfPage(renderer, i)
+                        val values = ContentValues(valuesBase).apply {
+                            put(MediaStore.Images.Media.DISPLAY_NAME, "ANYFILE-page-${i + 1}.png")
+                        }
+                        val outUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                        if (outUri != null) {
+                            contentResolver.openOutputStream(outUri)?.use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                            saved++
+                        }
+                        bitmap.recycle()
+                    }
+                }
+            }
+        }
+        Toast.makeText(this, getString(R.string.pdf_images_saved, saved), Toast.LENGTH_LONG).show()
+    }
+
+    private fun compressImage(input: Uri, output: Uri): Boolean = runCatching {
+        val bitmap = decodeBitmap(input) ?: return@runCatching false
+        val maxSide = 1920
+        val scale = minOf(1f, maxSide.toFloat() / maxOf(bitmap.width, bitmap.height))
+        val target = if (scale < 1f) Bitmap.createScaledBitmap(
+            bitmap,
+            (bitmap.width * scale).toInt().coerceAtLeast(1),
+            (bitmap.height * scale).toInt().coerceAtLeast(1),
+            true
+        ) else bitmap
+        val ok = contentResolver.openOutputStream(output)?.use {
+            target.compress(Bitmap.CompressFormat.JPEG, 72, it)
+        } ?: false
+        if (target !== bitmap) target.recycle()
+        bitmap.recycle()
+        ok
+    }.getOrDefault(false)
+
+    private fun showResizeDialog(uri: Uri) {
+        val bitmap = decodeBitmap(uri)
+        if (bitmap == null) {
+            Toast.makeText(this, R.string.tool_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val originalW = bitmap.width
+        val originalH = bitmap.height
+        bitmap.recycle()
+
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 0, pad, 0)
+        }
+        val widthInput = android.widget.EditText(this).apply {
+            hint = getString(R.string.width)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(originalW.toString())
+        }
+        val heightInput = android.widget.EditText(this).apply {
+            hint = getString(R.string.height)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(originalH.toString())
+        }
+        box.addView(widthInput)
+        box.addView(heightInput)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.resize_image)
+            .setMessage(getString(R.string.original_size, originalW, originalH))
+            .setView(box)
+            .setPositiveButton(R.string.continue_label) { _, _ ->
+                val w = widthInput.text?.toString()?.toIntOrNull() ?: 0
+                val h = heightInput.text?.toString()?.toIntOrNull() ?: 0
+                if (w !in 1..12000 || h !in 1..12000) {
+                    Toast.makeText(this, R.string.invalid_dimensions, Toast.LENGTH_SHORT).show()
+                } else {
+                    pendingImageUri = uri
+                    pendingResizeWidth = w
+                    pendingResizeHeight = h
+                    createResizedImage.launch(defaultOutputName(uri, "jpg").substringBeforeLast(".jpg") + "-resized.jpg")
+                }
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun resizeImage(input: Uri, output: Uri, width: Int, height: Int): Boolean = runCatching {
+        val bitmap = decodeBitmap(input) ?: return@runCatching false
+        val resized = Bitmap.createScaledBitmap(bitmap, width, height, true)
+        val ok = contentResolver.openOutputStream(output)?.use {
+            resized.compress(Bitmap.CompressFormat.JPEG, 90, it)
+        } ?: false
+        resized.recycle()
+        bitmap.recycle()
+        ok
+    }.getOrDefault(false)
+
+    private fun showManageFileDialog(uri: Uri) {
+        val options = arrayOf(
+            getString(R.string.rename_file),
+            getString(R.string.share_file),
+            getString(R.string.delete_file)
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(displayName(uri))
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showRenameDialog(uri)
+                    1 -> shareUri(uri)
+                    2 -> confirmDelete(uri)
+                }
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun showRenameDialog(uri: Uri) {
+        val input = android.widget.EditText(this).apply {
+            setText(displayName(uri))
+            setSingleLine(true)
+            selectAll()
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.rename_file)
+            .setView(input)
+            .setPositiveButton(R.string.rename) { _, _ ->
+                val newName = input.text?.toString()?.trim().orEmpty()
+                val renamed = if (newName.isNotBlank()) runCatching {
+                    DocumentsContract.renameDocument(contentResolver, uri, newName)
+                }.getOrNull() else null
+                Toast.makeText(this, if (renamed != null) R.string.rename_done else R.string.rename_failed, Toast.LENGTH_SHORT).show()
+                render()
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
+    private fun shareUri(uri: Uri) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = contentResolver.getType(uri) ?: "*/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching { startActivity(Intent.createChooser(intent, getString(R.string.share_file))) }
+            .onFailure { Toast.makeText(this, R.string.share_failed, Toast.LENGTH_SHORT).show() }
+    }
+
+    private fun confirmDelete(uri: Uri) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete_file)
+            .setMessage(R.string.delete_confirm)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                val deleted = runCatching {
+                    DocumentsContract.deleteDocument(contentResolver, uri)
+                }.getOrDefault(false)
+                Toast.makeText(this, if (deleted) R.string.delete_done else R.string.delete_failed, Toast.LENGTH_SHORT).show()
+                if (deleted) {
+                    Recents.remove(this, uri.toString())
+                    Thumbs.evict(this, uri.toString())
+                    render()
+                }
+            }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
+
     private fun createZip(inputs: List<Uri>, output: Uri): Boolean = runCatching {
         contentResolver.openOutputStream(output)?.use { raw ->
             ZipOutputStream(raw).use { zip ->
@@ -634,6 +1055,10 @@ class MainActivity : AppCompatActivity() {
             ToolAction.EXTRACT_ZIP -> {
                 pendingZipUri = uri
                 pickExtractFolder.launch(null)
+            }
+            ToolAction.UNKNOWN_FILE -> {
+                showUnknownFile(uri)
+                pendingTool = null
             }
             ToolAction.IMAGE_TO_JPG -> {
                 pendingInputUri = uri
@@ -777,6 +1202,46 @@ class MainActivity : AppCompatActivity() {
         pdf.close()
         ok
     }.getOrDefault(false)
+
+    private fun showUnknownFile(uri: Uri) {
+        val name = displayName(uri)
+        val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
+        val mime = contentResolver.getType(uri)
+            ?: android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+            ?: "application/octet-stream"
+
+        val category = when {
+            mime == "application/pdf" -> "PDF document"
+            mime.startsWith("image/") -> "Image"
+            mime.startsWith("video/") -> "Video"
+            mime.startsWith("audio/") -> "Audio"
+            mime.startsWith("text/") -> "Text / code"
+            mime.contains("word") || ext == "docx" || ext == "doc" -> "Word document"
+            mime.contains("sheet") || ext in setOf("xlsx", "xls", "csv", "ods") -> "Spreadsheet"
+            mime.contains("presentation") || ext in setOf("pptx", "ppt") -> "Presentation"
+            ext == "zip" -> "ZIP archive"
+            else -> "Unknown / binary file"
+        }
+
+        val size = fileSize(uri)
+        val message = buildString {
+            append(getString(R.string.unknown_name)).append(": ").append(name).append("\n\n")
+            append(getString(R.string.unknown_extension)).append(": ")
+                .append(if (ext.isBlank()) getString(R.string.unknown_none) else ".$ext").append("\n\n")
+            append(getString(R.string.unknown_category)).append(": ").append(category).append("\n\n")
+            append("MIME: ").append(mime).append("\n\n")
+            append(getString(R.string.file_info_size)).append(": ")
+                .append(if (size > 0) Formatter.formatShortFileSize(this@MainActivity, size) else getString(R.string.unknown_size))
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.open_unknown_file)
+            .setMessage(message)
+            .setPositiveButton(R.string.try_to_open) { _, _ -> openInViewer(uri) }
+            .setNeutralButton(R.string.file_info) { _, _ -> showFileInfo(uri) }
+            .setNegativeButton(R.string.about_close, null)
+            .show()
+    }
 
     private fun showFileInfo(uri: Uri) {
         val name = displayName(uri)

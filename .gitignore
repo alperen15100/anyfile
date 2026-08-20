@@ -13,3 +13,10 @@ __pycache__/
 # Signing key stays local, never in the public repo
 keystore/
 dist/
+
+keystore.properties
+keystore/
+*.jks
+*.keystore
+app/build.gradle.kts.backup
+local.properties

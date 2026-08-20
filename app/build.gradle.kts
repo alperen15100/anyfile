@@ -1,4 +1,10 @@
+import java.util.Properties
+import java.io.FileInputStream
 import com.android.build.api.artifact.SingleArtifact
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
 
 plugins {
     id("com.android.application")
@@ -14,7 +20,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 12
-        versionName = "1.10"
+        versionName = "1.0.0"
     }
 
     // The release keystore is intentionally not in the repo. Contributors without
@@ -25,17 +31,12 @@ android {
     // public and a password committed to it is a password published. The fallback
     // is the throwaway one the README tells contributors to generate their own key
     // with, so cloning and building keeps working with no configuration at all.
-    val releaseKeystore = rootProject.file("keystore/gander.jks")
-    if (releaseKeystore.exists()) {
-        val storePass = (findProperty("GANDER_STORE_PASSWORD") as String?) ?: "gander-local"
-        val keyPass = (findProperty("GANDER_KEY_PASSWORD") as String?) ?: storePass
-        signingConfigs {
-            create("release") {
-                storeFile = releaseKeystore
-                storePassword = storePass
-                keyAlias = "gander"
-                keyPassword = keyPass
-            }
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
         }
     }
 
